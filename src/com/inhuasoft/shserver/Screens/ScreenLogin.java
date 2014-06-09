@@ -74,7 +74,7 @@ public class ScreenLogin extends BaseScreen {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.screen_login);
+		setContentView(R.layout.screen_box_login);
 		
 		mSipBroadCastRecv = new BroadcastReceiver() {
 			@Override

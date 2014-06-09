@@ -9,10 +9,10 @@
     
         <activity android:name=".Main"
                   android:label="@string/app_name" android:launchMode="singleTop">
-             <intent-filter>
+            <!--  <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter> 
+            </intent-filter>  -->
         </activity>
         <activity android:name=".Screens.ScreenSplash"/>
         <activity android:name=".Screens.ScreenHome"/>
@@ -48,12 +48,12 @@
         <activity android:name=".Screens.ScreenAVQueue"></activity>
         <activity android:name=".Screens.ScreenChatQueue"></activity>
         <activity android:name=".Screens.ScreenDevices"></activity>
-        <activity android:name=".Screens.ScreenLogin"  android:label="@string/app_name" android:launchMode="singleTop">
-           <!--  <intent-filter>
+        <activity android:name=".Screens.ScreenLogin"  android:label="@string/app_name" android:screenOrientation="landscape" android:launchMode="singleTop">
+             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
              </intent-filter>
-            --> 
+            
         </activity>
 
     </application>
