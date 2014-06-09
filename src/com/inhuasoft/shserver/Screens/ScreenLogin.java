@@ -20,6 +20,7 @@
 package com.inhuasoft.shserver.Screens;
 
 import com.inhuasoft.shserver.CustomDialog;
+import com.inhuasoft.shserver.Engine;
 import com.inhuasoft.shserver.Main;
 import com.inhuasoft.shserver.R;
 import org.doubango.ngn.events.NgnEventArgs;
@@ -52,31 +53,22 @@ import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
 
 
-public class ScreenLogin extends BaseScreen {
+public class ScreenLogin extends Activity {
 	private static String TAG = ScreenLogin.class.getCanonicalName();
 	
 	private static final int MENU_EXIT = 0;
 	private static final int MENU_SETTINGS = 1;
 	
 	
-	private final INgnSipService mSipService;
-	private final INgnConfigurationService mConfigurationService;
-	
 	private BroadcastReceiver mSipBroadCastRecv;
 	
-	public ScreenLogin() {
-		super(SCREEN_TYPE.SCREENLOGIN, TAG);
-		
-		mSipService = getEngine().getSipService();
-		mConfigurationService = getEngine().getConfigurationService();
-	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.screen_box_login);
 		
-		mSipBroadCastRecv = new BroadcastReceiver() {
+	/*	mSipBroadCastRecv = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				final String action = intent.getAction();
@@ -104,44 +96,45 @@ public class ScreenLogin extends BaseScreen {
 		};
 		final IntentFilter intentFilter = new IntentFilter();
 		intentFilter.addAction(NgnRegistrationEventArgs.ACTION_REGISTRATION_EVENT);
-	    registerReceiver(mSipBroadCastRecv, intentFilter);
+	    registerReceiver(mSipBroadCastRecv, intentFilter);*/
 	}
 
 	@Override
 	protected void onDestroy() {
-       if(mSipBroadCastRecv != null){
+      /* if(mSipBroadCastRecv != null){
     	   unregisterReceiver(mSipBroadCastRecv);
     	   mSipBroadCastRecv = null;
        }
-        
+        */
        super.onDestroy();
 	}
 	
-	@Override
-	public boolean hasMenu() {
-		return true;
-	}
+//	@Override
+//	public boolean hasMenu() {
+//		return true;
+//	}
+//	
+//	@Override
+//	public boolean createOptionsMenu(Menu menu) {
+//		menu.add(0, ScreenLogin.MENU_SETTINGS, 0, "Settings");
+//		MenuItem itemExit = menu.add(0, ScreenLogin.MENU_EXIT, 0, "Exit");
+//		
+//		return true;
+//	}
+//	
+//	@Override
+//	public boolean onOptionsItemSelected(MenuItem item) {
+//		switch(item.getItemId()){
+//			case ScreenLogin.MENU_EXIT:
+//				((Main)getEngine().getMainActivity()).exit();
+//				break;
+//			case ScreenLogin.MENU_SETTINGS:
+//				mScreenService.show(ScreenSettings.class);
+//				break;
+//		}
+//		return true;
+//	}
 	
-	@Override
-	public boolean createOptionsMenu(Menu menu) {
-		menu.add(0, ScreenLogin.MENU_SETTINGS, 0, "Settings");
-		/*MenuItem itemExit =*/ menu.add(0, ScreenLogin.MENU_EXIT, 0, "Exit");
-		
-		return true;
-	}
-	
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch(item.getItemId()){
-			case ScreenLogin.MENU_EXIT:
-				((Main)getEngine().getMainActivity()).exit();
-				break;
-			case ScreenLogin.MENU_SETTINGS:
-				mScreenService.show(ScreenSettings.class);
-				break;
-		}
-		return true;
-	}
 	
 	
 	
