@@ -52,5 +52,10 @@
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_screen_main_av">ScreenMainAV</string>
+    <string name="hint_username">UserName</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_checkpassword">Password Again</string>
+    <string name="hint_lawcopyright">Read and agree to the terms of the privacy policy</string>
+    <string name="string_btn_reg">Sign   Up</string>
 
 </resources>
