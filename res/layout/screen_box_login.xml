@@ -70,6 +70,7 @@
 
     <Button
         android:layout_width="452.0dip"
+        android:id="@+id/btnsubmit"
         android:layout_height="55.0dip"
         android:layout_marginTop="20.0dip"
         android:background="@drawable/ic_submit"

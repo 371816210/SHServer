@@ -45,15 +45,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
 
 
-public class ScreenLogin extends Activity {
+public class ScreenLogin extends Activity  implements OnClickListener {
 	private static String TAG = ScreenLogin.class.getCanonicalName();
 	
 	private static final int MENU_EXIT = 0;
@@ -62,12 +64,14 @@ public class ScreenLogin extends Activity {
 	
 	private BroadcastReceiver mSipBroadCastRecv;
 	
+	Button btnSubmit;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.screen_box_login);
-		
+		btnSubmit = (Button)findViewById(R.id.btnsubmit);
+		btnSubmit.setOnClickListener(this);
 	/*	mSipBroadCastRecv = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
@@ -107,6 +111,17 @@ public class ScreenLogin extends Activity {
        }
         */
        super.onDestroy();
+	}
+
+	@Override
+	public void onClick(View arg0) {
+		// TODO Auto-generated method stub
+		if(arg0.getId() == R.id.btnsubmit)
+		{
+			Intent intent = new Intent();
+			intent.setClass(getApplicationContext(), ScreenMainAV.class);
+			startActivity(intent);
+		}
 	}
 	
 //	@Override
