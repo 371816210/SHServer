@@ -20,12 +20,21 @@
 package com.inhuasoft.shserver;
 
 import org.doubango.ngn.NgnApplication;
-
+import org.apache.http.client.CookieStore;
 import android.util.Log;
 
 public class IMSDroid extends NgnApplication{
 	private final static String TAG = IMSDroid.class.getCanonicalName();
 	
+	    private CookieStore cookies;  
+	    public CookieStore getCookie(){   
+	        return cookies;
+	    }
+	    public void setCookie(CookieStore cks){
+	        cookies = cks;
+	    }
+	
+	    
 	public IMSDroid() {
     	Log.d(TAG,"IMSDroid()");
     }
