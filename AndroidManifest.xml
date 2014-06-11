@@ -5,7 +5,7 @@
     android:versionName="2.569.1089" >
 
     <uses-sdk
-        android:minSdkVersion="7"
+        android:minSdkVersion="9"
         android:targetSdkVersion="10" />
 
     <application

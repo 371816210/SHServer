@@ -23,6 +23,8 @@ import com.inhuasoft.shserver.CustomDialog;
 import com.inhuasoft.shserver.Engine;
 import com.inhuasoft.shserver.Main;
 import com.inhuasoft.shserver.R;
+import com.inhuasoft.shserver.Utils.SipAdminUtils;
+
 import org.doubango.ngn.events.NgnEventArgs;
 import org.doubango.ngn.events.NgnRegistrationEventArgs;
 import org.doubango.ngn.media.NgnMediaType;
@@ -118,9 +120,14 @@ public class ScreenLogin extends Activity  implements OnClickListener {
 		// TODO Auto-generated method stub
 		if(arg0.getId() == R.id.btnsubmit)
 		{
-			Intent intent = new Intent();
+			SipAdminUtils sipAdmin =  new SipAdminUtils(this);
+		    boolean flag = sipAdmin.Sip_Add_User(SipAdminUtils.getDeviceNo());
+		    System.out.println("======================flag:"+flag);
+			//sipAdmin.Sip_Admin_Login();
+			
+			/*Intent intent = new Intent();
 			intent.setClass(getApplicationContext(), ScreenMainAV.class);
-			startActivity(intent);
+			startActivity(intent);*/
 		}
 	}
 	
