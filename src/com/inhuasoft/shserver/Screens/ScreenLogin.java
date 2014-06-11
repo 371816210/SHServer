@@ -120,14 +120,14 @@ public class ScreenLogin extends Activity  implements OnClickListener {
 		// TODO Auto-generated method stub
 		if(arg0.getId() == R.id.btnsubmit)
 		{
-			SipAdminUtils sipAdmin =  new SipAdminUtils(this);
-		    boolean flag = sipAdmin.Sip_Add_User(SipAdminUtils.getDeviceNo());
-		    System.out.println("======================flag:"+flag);
+			//SipAdminUtils sipAdmin =  new SipAdminUtils(this);
+		    //boolean flag = sipAdmin.Sip_Add_User(SipAdminUtils.getDeviceNo());
+		    //System.out.println("======================flag:"+flag);
 			//sipAdmin.Sip_Admin_Login();
 			
-			/*Intent intent = new Intent();
+			Intent intent = new Intent();
 			intent.setClass(getApplicationContext(), ScreenMainAV.class);
-			startActivity(intent);*/
+			startActivity(intent);
 		}
 	}
 	
