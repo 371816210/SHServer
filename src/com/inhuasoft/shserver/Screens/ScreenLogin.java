@@ -19,12 +19,33 @@
 */
 package com.inhuasoft.shserver.Screens;
 
+
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.inhuasoft.shserver.CustomDialog;
 import com.inhuasoft.shserver.Engine;
+import com.inhuasoft.shserver.IMSDroid;
 import com.inhuasoft.shserver.Main;
 import com.inhuasoft.shserver.R;
+import com.inhuasoft.shserver.Utils.MD5;
 import com.inhuasoft.shserver.Utils.SipAdminUtils;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.AbstractHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.doubango.ngn.events.NgnEventArgs;
 import org.doubango.ngn.events.NgnRegistrationEventArgs;
 import org.doubango.ngn.media.NgnMediaType;
@@ -40,7 +61,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -68,12 +92,210 @@ public class ScreenLogin extends Activity  implements OnClickListener {
 	
 	Button btnSubmit;
 	
+	private static final int Admin_Login_Action = 0X01;
+	private static final int Admin_Login_Fail = 0X02;
+	private static final int Admin_Login_Success = 0X03;
+	private static final int Sip_Add_User_Action = 0X04;
+	private static final int Sip_Add_User_Fail = 0X05;
+	private static final int Sip_Add_User_Success = 0X06;
+	
+	public String  sip_UserName;
+	
+	private Handler mHandler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			// TODO Auto-generated method stub
+			switch (msg.what) {
+
+			case Admin_Login_Action:
+				SipAdminLoginThread thread_admin_login = new SipAdminLoginThread();
+				thread_admin_login.start();
+				break;
+			case Admin_Login_Fail:
+				 final AlertDialog dialog = CustomDialog.create(
+						                                   ScreenLogin.this,
+						                                  R.drawable.exit_48,
+						                                 null,
+						                                  " error code is  ",
+						                                 "Yes",
+						                                 new DialogInterface.OnClickListener() {
+						                                    @Override
+						                                      public void onClick(DialogInterface dialog, int which) {
+						                                     
+						                                      }
+						                                  }, null,null);
+						                          dialog.show();
+				break;
+			case Admin_Login_Success:
+				final AlertDialog dialog1 = CustomDialog.create(
+                        ScreenLogin.this,
+                       R.drawable.exit_48,
+                      null,
+                       " Admin Login Success ",
+                      "Yes",
+                      new DialogInterface.OnClickListener() {
+                         @Override
+                           public void onClick(DialogInterface dialog, int which) {
+                          
+                           }
+                       }, null,null);
+               dialog1.show();
+				break;
+			case Sip_Add_User_Action:
+				SipAddUserThread thread_add_user = new SipAddUserThread();
+				thread_add_user.start();
+				break;
+			case Sip_Add_User_Fail:
+				break;
+			case Sip_Add_User_Success:
+				break;
+
+			}
+		}
+	};
+	
+
+	   public static String getDeviceNo()
+	    {
+	      return Build.SERIAL;
+	    }
+	   
+	
+	class SipAddUserThread extends Thread {
+
+		public void run() {
+			String httpUrl = "http://sip.inhuasoft.cn/tools/users/user_management/user_management.php?action=add_verify&id=";
+			HttpPost request = new HttpPost(httpUrl);
+			HttpClient httpClient = new DefaultHttpClient();
+			List<NameValuePair> params = new ArrayList<NameValuePair>();
+			System.out.println("=================username:"+sip_UserName);
+			params.add(new BasicNameValuePair("uname", sip_UserName));
+			params.add(new BasicNameValuePair("email", sip_UserName+"@inhuasoft.cn"));
+			params.add(new BasicNameValuePair("alias", sip_UserName));
+			params.add(new BasicNameValuePair("domain", "115.28.9.71"));
+			params.add(new BasicNameValuePair("alias_type", "dbaliases"));
+			params.add(new BasicNameValuePair("passwd", sip_UserName));
+			params.add(new BasicNameValuePair("confirm_passwd", sip_UserName));
+			HttpResponse response;
+			IMSDroid appCookie = ((IMSDroid) ScreenLogin.this.getApplication());
+			((AbstractHttpClient) httpClient).setCookieStore(appCookie
+					.getCookie());
+			try {
+				HttpEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
+				request.setEntity(entity);
+				response = httpClient.execute(request);
+
+				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+					String str = EntityUtils.toString(response.getEntity());
+					String strmd5 = MD5.getMD5(str);
+					if (str.contains("is already a valid user")) {
+						//sip_add_user = true;
+						Message message = mHandler.obtainMessage(Admin_Login_Success,200);
+						message.sendToTarget();
+						System.out.println("=================is already a valid user");
+					}
+					if (str.contains("New User added!")) {
+						Message message = mHandler.obtainMessage(Admin_Login_Success,201);
+						message.sendToTarget();
+						System.out.println("New User added!");
+						//sip_add_user = true;
+					}
+					//System.out.println(" login in add user");
+				} else {
+					System.out.println("add user fail ");
+				    //	sip_add_user = false;
+					Message message = mHandler.obtainMessage(Admin_Login_Fail,400);
+					message.sendToTarget();
+				}
+			} catch (ClientProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				Message message = mHandler.obtainMessage(Admin_Login_Fail,401);
+				message.sendToTarget();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				Message message = mHandler.obtainMessage(Admin_Login_Fail,402);
+				message.sendToTarget();
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				Message message = mHandler.obtainMessage(Admin_Login_Fail,403);
+				message.sendToTarget();
+			}
+		}
+	}
+	
+	
+	
+	class SipAdminLoginThread extends Thread {
+
+		public void run() {
+			String login_ok = "8010210925-35110-444-10984-4122-322463124";
+			String httpUrl = "http://sip.inhuasoft.cn/login.php";
+			HttpPost request = new HttpPost(httpUrl);
+			HttpClient httpClient = new DefaultHttpClient();
+			List<NameValuePair> params = new ArrayList<NameValuePair>();
+			params.add(new BasicNameValuePair("name", "admin"));
+			params.add(new BasicNameValuePair("password", "admin"));
+			HttpResponse response;
+
+			try {
+				HttpEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
+				request.setEntity(entity);
+				response = httpClient.execute(request);
+
+				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+					String str = EntityUtils.toString(response.getEntity());
+					String strmd5 = MD5.getMD5(str);
+					System.out.println("response:" + strmd5);
+					if (strmd5.equals(login_ok)) {
+						System.out.println("sip admin web login success");
+						Message message = mHandler.obtainMessage(Admin_Login_Success);
+						message.sendToTarget();
+						CookieStore cookies = ((AbstractHttpClient) httpClient)
+								.getCookieStore();
+						IMSDroid appCookie = ((IMSDroid) ScreenLogin.this
+								.getApplication());
+						// ((AbstractHttpClient)
+						// httpClient).setCookieStore(cookies);
+						appCookie.setCookie(cookies);
+						// Toast.makeText(getApplicationContext(),
+						// " login success ", Toast.LENGTH_SHORT).show();
+					} else {
+						System.out.println("sip admin web login fail ");
+						Message message = mHandler.obtainMessage(Admin_Login_Fail,501);
+						message.sendToTarget();
+						//sip_admin_login_flag = false;
+						// Toast.makeText(getApplicationContext(),
+						// " login fail ", Toast.LENGTH_SHORT).show();
+					}
+				} else {
+					System.out.println("sip admin web reponse fail");
+					Message message = mHandler.obtainMessage(Admin_Login_Fail,505);
+					message.sendToTarget();
+				}
+			} catch (ClientProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.screen_box_login);
 		btnSubmit = (Button)findViewById(R.id.btnsubmit);
 		btnSubmit.setOnClickListener(this);
+		sip_UserName = getDeviceNo();
 	/*	mSipBroadCastRecv = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
@@ -125,9 +347,13 @@ public class ScreenLogin extends Activity  implements OnClickListener {
 		    //System.out.println("======================flag:"+flag);
 			//sipAdmin.Sip_Admin_Login();
 			
-			Intent intent = new Intent();
-			intent.setClass(getApplicationContext(), ScreenMainAV.class);
-			startActivity(intent);
+			//Intent intent = new Intent();
+			//intent.setClass(getApplicationContext(), ScreenMainAV.class);
+			//startActivity(intent);
+			
+			
+			Message message = mHandler.obtainMessage(Admin_Login_Action);
+			message.sendToTarget();
 		}
 	}
 	
