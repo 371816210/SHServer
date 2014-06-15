@@ -21,9 +21,17 @@ package com.inhuasoft.shserver.Screens;
 
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import com.inhuasoft.shserver.CustomDialog;
 import com.inhuasoft.shserver.Engine;
@@ -53,7 +61,11 @@ import org.doubango.ngn.services.INgnConfigurationService;
 import org.doubango.ngn.services.INgnSipService;
 import org.doubango.ngn.sip.NgnSipSession.ConnectionState;
 import org.doubango.ngn.utils.NgnConfigurationEntry;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
+import android.R.integer;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -98,6 +110,7 @@ public class ScreenLogin extends Activity  implements OnClickListener {
 	private static final int Sip_Add_User_Action = 0X04;
 	private static final int Sip_Add_User_Fail = 0X05;
 	private static final int Sip_Add_User_Success = 0X06;
+	private static final int Sip_Device_Reg_Action = 0X07;
 	
 	public String  sip_UserName;
 	
@@ -112,11 +125,12 @@ public class ScreenLogin extends Activity  implements OnClickListener {
 				thread_admin_login.start();
 				break;
 			case Admin_Login_Fail:
+				 int errorcode =  msg.arg1;
 				 final AlertDialog dialog = CustomDialog.create(
 						                                   ScreenLogin.this,
 						                                  R.drawable.exit_48,
 						                                 null,
-						                                  " error code is  ",
+						                                  " a error has occurred, error code is  "+ errorcode,
 						                                 "Yes",
 						                                 new DialogInterface.OnClickListener() {
 						                                    @Override
@@ -127,27 +141,34 @@ public class ScreenLogin extends Activity  implements OnClickListener {
 						                          dialog.show();
 				break;
 			case Admin_Login_Success:
-				final AlertDialog dialog1 = CustomDialog.create(
-                        ScreenLogin.this,
-                       R.drawable.exit_48,
-                      null,
-                       " Admin Login Success ",
-                      "Yes",
-                      new DialogInterface.OnClickListener() {
-                         @Override
-                           public void onClick(DialogInterface dialog, int which) {
-                          
-                           }
-                       }, null,null);
-               dialog1.show();
+				Message message = mHandler.obtainMessage(Sip_Add_User_Action);
+				message.sendToTarget();
 				break;
 			case Sip_Add_User_Action:
 				SipAddUserThread thread_add_user = new SipAddUserThread();
 				thread_add_user.start();
 				break;
 			case Sip_Add_User_Fail:
+				 int user_error_code =  msg.arg1;
+				 final AlertDialog dialog1 = CustomDialog.create(
+						                                   ScreenLogin.this,
+						                                  R.drawable.exit_48,
+						                                 null,
+						                                  " a error has occurred, error code is  "+ user_error_code,
+						                                 "Yes",
+						                                 new DialogInterface.OnClickListener() {
+						                                    @Override
+						                                      public void onClick(DialogInterface dialog, int which) {
+						                                     
+						                                      }
+						                                  }, null,null);
+						                          dialog1.show();
 				break;
 			case Sip_Add_User_Success:
+				Message device_reg_message = mHandler.obtainMessage(Sip_Add_User_Action);
+				device_reg_message.sendToTarget();
+				break;
+			case Sip_Device_Reg_Action:
 				break;
 
 			}
@@ -160,6 +181,20 @@ public class ScreenLogin extends Activity  implements OnClickListener {
 	      return Build.SERIAL;
 	    }
 	   
+	   
+	   
+	    public static String getValByTagName(Document doc, String tagName) {
+			NodeList list = doc.getElementsByTagName(tagName);
+			if (list.getLength() > 0) {
+				   Node node = list.item(0);
+				   Node valNode = node.getFirstChild();
+				   if (valNode != null) {
+				   String val = valNode.getNodeValue();
+				   return val;
+				  }
+			 }
+			 return null;   
+		}
 	
 	class SipAddUserThread extends Thread {
 
@@ -289,7 +324,71 @@ public class ScreenLogin extends Activity  implements OnClickListener {
 	}
 	
 	
-	@Override
+	
+	class SipDeviceRegThread extends Thread {
+
+		public void run() {
+			String RequestUrl = "http://ota.inhuasoft.cn/SHS_WS/ShsService.asmx?op=DeviceRegist";
+			URL url = null;
+			try {
+				url = new URL(RequestUrl);
+			} catch (MalformedURLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} 
+			String envelope="<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+			  "<soap12:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap12=\"http://www.w3.org/2003/05/soap-envelope\">" +
+			  "<soap12:Header>"+
+		      "<MySoapHeader xmlns=\"http://tempuri.org/\">"+
+		      "<UserName>SysAdmin</UserName>"+
+		      "<PassWord>SysAdminSysAdmin</PassWord>"+
+		      "</MySoapHeader>"+
+		    "</soap12:Header>"+
+		    "<soap12:Body>"+
+		    "<DeviceRegist xmlns=\"http://tempuri.org/\">"+
+		      "<DeviceNo>"+getDeviceNo()+"</DeviceNo>"+
+		      "<SipAccount></SipAccount>"+
+		      "<SipPwd></SipPwd>"+
+		    "</DeviceRegist>"+
+		    "</soap12:Body>"+
+		    "</soap12:Envelope>";
+			HttpURLConnection httpConnection=null;
+			OutputStream output=null;
+			InputStream input=null;
+			try{			   
+			    httpConnection = (HttpURLConnection)url.openConnection();
+			    httpConnection.setRequestMethod("POST");
+			    httpConnection.setRequestProperty( "Content-Length",String.valueOf( envelope.length() ) );
+			    httpConnection.setRequestProperty("Content-Type","text/xml; charset=utf-8");
+			    httpConnection.setDoOutput(true);
+			    httpConnection.setDoInput(true);
+			    output=httpConnection.getOutputStream();
+			    output.write(envelope.getBytes());
+			    output.flush();
+			    input=httpConnection.getInputStream();
+			    DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance(); 
+			    DocumentBuilder builder = factory.newDocumentBuilder();   
+			    Document dom = builder.parse(input);
+			    String returncode = getValByTagName(dom,"DeviceRegistResult");//·µ»ØÂë
+			    
+			}catch(Exception ex)
+			{
+				Log.d(TAG, "-->getResponseString:catch"+ex.getMessage());
+			}finally
+			{
+				try{
+					output.close();
+					input.close();
+					httpConnection.disconnect();
+				}catch(Exception e)
+				{
+					Log.d(TAG, "-->getResponseString:finally"+e.getMessage());
+				}
+			}
+			
+	}
+	}
+	
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.screen_box_login);
@@ -382,8 +481,5 @@ public class ScreenLogin extends Activity  implements OnClickListener {
 //		}
 //		return true;
 //	}
-	
-	
-	
-	
 }
+
