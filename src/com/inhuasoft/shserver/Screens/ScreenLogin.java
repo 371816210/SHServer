@@ -61,6 +61,7 @@ import org.doubango.ngn.services.INgnConfigurationService;
 import org.doubango.ngn.services.INgnSipService;
 import org.doubango.ngn.sip.NgnSipSession.ConnectionState;
 import org.doubango.ngn.utils.NgnConfigurationEntry;
+import org.doubango.tinyWRAP.MsrpCallback;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -132,7 +133,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				int admin_login_errorcode = msg.arg1;
 				final AlertDialog admin_login_dialog = CustomDialog.create(
 						ScreenLogin.this, R.drawable.exit_48, null,
-						" a error has occurred, error code is  "
+						" A error has occurred, the error code is  "
 								+ admin_login_errorcode, "exit",
 						new DialogInterface.OnClickListener() {
 							@Override
@@ -157,7 +158,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				int sip_add_user_errorcode = msg.arg1;
 				final AlertDialog sip_add_user_dialog = CustomDialog.create(
 						ScreenLogin.this, R.drawable.exit_48, null,
-						" a error has occurred, error code is  "
+						" A error has occurred, the error code is  "
 								+ sip_add_user_errorcode, "exit",
 						new DialogInterface.OnClickListener() {
 							@Override
@@ -182,7 +183,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				int sip_add_device_errorcode = msg.arg1;
 				final AlertDialog sip_add_device_dialog = CustomDialog.create(
 						ScreenLogin.this, R.drawable.exit_48, null,
-						" a error has occurred, error code is  "
+						" A error has occurred, the error code is  "
 								+ sip_add_device_errorcode, "exit",
 						new DialogInterface.OnClickListener() {
 							@Override
@@ -212,7 +213,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				int device_reg_errorcode = msg.arg1;
 				final AlertDialog device_reg_dialog = CustomDialog.create(
 						ScreenLogin.this, R.drawable.exit_48, null,
-						" a error has occurred, error code is  "
+						" A error has occurred, the error code is  "
 								+ device_reg_errorcode, "exit",
 						new DialogInterface.OnClickListener() {
 							@Override
@@ -252,7 +253,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				} else {
 					final AlertDialog user_reg_dialog = CustomDialog.create(
 							ScreenLogin.this, R.drawable.exit_48, null,
-							" a error has occurred, error code is  "
+							" A error has occurred,the error code is  "
 									+ user_reg_errorcode, "exit",
 							new DialogInterface.OnClickListener() {
 								@Override
@@ -275,7 +276,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				int bind_user_device_errorcode = msg.arg1;
 				final AlertDialog bind_user_device_dialog = CustomDialog
 						.create(ScreenLogin.this, R.drawable.exit_48, null,
-								" a error has occurred, error code is  "
+								" A error has occurred,the error code is  "
 										+ bind_user_device_errorcode, "exit",
 								new DialogInterface.OnClickListener() {
 									@Override
@@ -287,6 +288,9 @@ public class ScreenLogin extends Activity implements OnClickListener {
 								}, null, null);
 				bind_user_device_dialog.show();
 				break;
+			 default:  
+		            super.handleMessage(msg);//这里最好对不需要或者不关心的消息抛给父类，避免丢失消息  
+		            break; 
 
 			}
 		}
@@ -336,7 +340,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					if (strmd5.equals(login_ok)) {
 						System.out.println("sip admin web login success");
 						Message message = mHandler.obtainMessage(
-								Admin_Login_Success, 300);
+								Admin_Login_Success);
+						message.arg1 = 300 ;
 						message.sendToTarget();
 						CookieStore cookies = ((AbstractHttpClient) httpClient)
 								.getCookieStore();
@@ -350,7 +355,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					} else {
 						System.out.println("sip admin web login fail ");
 						Message message = mHandler.obtainMessage(
-								Admin_Login_Fail, 301);
+								Admin_Login_Fail);
+						message.arg1 = 301;
 						message.sendToTarget();
 						// sip_admin_login_flag = false;
 						// Toast.makeText(getApplicationContext(),
@@ -358,23 +364,26 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					}
 				} else {
 					System.out.println("sip admin web reponse fail");
-					Message message = mHandler.obtainMessage(Admin_Login_Fail,
-							302);
+					Message message = mHandler.obtainMessage(Admin_Login_Fail);
+					message.arg1 = 302;
 					message.sendToTarget();
 				}
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
-				Message message = mHandler.obtainMessage(Admin_Login_Fail, 303);
+				Message message = mHandler.obtainMessage(Admin_Login_Fail);
+				message.arg1 = 303 ;
 				message.sendToTarget();
 				e.printStackTrace();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				Message message = mHandler.obtainMessage(Admin_Login_Fail, 304);
+				Message message = mHandler.obtainMessage(Admin_Login_Fail);
+				message.arg1 = 304 ;
 				message.sendToTarget();
 				e.printStackTrace();
 			} catch (NoSuchAlgorithmException e) {
 				// TODO Auto-generated catch block
-				Message message = mHandler.obtainMessage(Admin_Login_Fail, 305);
+				Message message = mHandler.obtainMessage(Admin_Login_Fail);
+				message.arg1 = 305;
 				message.sendToTarget();
 				e.printStackTrace();
 			}
@@ -419,14 +428,16 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					if (str.contains("is already a valid user")) {
 						// sip_add_user = true;
 						Message message = mHandler.obtainMessage(
-								Sip_Add_User_Success, 100);
+								Sip_Add_User_Fail);
+						message.arg1 = 106;
 						message.sendToTarget();
 						System.out
 								.println("=================is already a valid user");
 					}
 					else if (str.contains("New User added!")) {
 						Message message = mHandler.obtainMessage(
-								Sip_Add_User_Success, 101);
+								Sip_Add_User_Success);
+						message.arg1 = 101 ;
 						message.sendToTarget();
 						System.out.println("New User added!");
 						// sip_add_user = true;
@@ -435,7 +446,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 						System.out.println("add user fail ");
 						// sip_add_user = false;
 						Message message = mHandler.obtainMessage(
-								Sip_Add_User_Fail, 105);
+								Sip_Add_User_Fail);
+						message.arg1 = 105;
 						message.sendToTarget();
 					}
 					// System.out.println(" login in add user");
@@ -443,26 +455,27 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					System.out.println("add user fail ");
 					// sip_add_user = false;
 					Message message = mHandler.obtainMessage(
-							Sip_Add_User_Fail, 102);
+							Sip_Add_User_Fail);
+					message.arg1 = 102 ;
 					message.sendToTarget();
 				}
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				Message message = mHandler.obtainMessage(Sip_Add_User_Fail,
-						102);
+				Message message = mHandler.obtainMessage(Sip_Add_User_Fail);
+				message.arg1 = 102;
 				message.sendToTarget();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				Message message = mHandler.obtainMessage(Sip_Add_User_Fail,
-						103);
+				Message message = mHandler.obtainMessage(Sip_Add_User_Fail);
+				message.arg1 = 103;
 				message.sendToTarget();
 			} catch (NoSuchAlgorithmException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				Message message = mHandler.obtainMessage(Sip_Add_User_Fail,
-						104);
+				Message message = mHandler.obtainMessage(Sip_Add_User_Fail);
+				message.arg1 = 104; 
 				message.sendToTarget();
 			}
 		}
@@ -500,14 +513,16 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					if (str.contains("is already a valid user")) {
 						// sip_add_user = true;
 						Message message = mHandler.obtainMessage(
-								Sip_Add_Device_Success, 200);
+								Sip_Add_Device_Fail);
+						message.arg1 = 206;
 						message.sendToTarget();
 						System.out
 								.println("=================is already a valid user");
 						return ;
 					} else if (str.contains("New User added!")) {
 						Message message = mHandler.obtainMessage(
-								Sip_Add_Device_Success, 201);
+								Sip_Add_Device_Success);
+						message.arg1 = 201 ;
 						message.sendToTarget();
 						System.out.println("New User added!");
 						return ;
@@ -516,8 +531,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					else {
 						System.out.println("add user fail ");
 						// sip_add_user = false;
-						Message message = mHandler.obtainMessage(Sip_Add_Device_Fail,
-								206);
+						Message message = mHandler.obtainMessage(Sip_Add_Device_Fail);
+						message.arg1 = 207 ;
 						message.sendToTarget();
 						return ;
 					}
@@ -525,27 +540,30 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				} else {
 					System.out.println("add user fail ");
 					// sip_add_user = false;
-					Message message = mHandler.obtainMessage(Sip_Add_Device_Fail,
-							202);
+					Message message = mHandler.obtainMessage(Sip_Add_Device_Fail);
+					message.arg1 = 202;
 					message.sendToTarget();
 					return ;
 				}
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail, 203);
+				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail);
+				message.arg1 = 203;
 				message.sendToTarget();
 				return ;
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail, 204);
+				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail);
+				message.arg1 = 204;
 				message.sendToTarget();
 				return ;
 			} catch (NoSuchAlgorithmException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail, 205);
+				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail);
+				message.arg1 = 205;
 				message.sendToTarget();
 				return ;
 			}
@@ -563,7 +581,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				url = new URL(RequestUrl);
 			} catch (MalformedURLException e1) {
 				// TODO Auto-generated catch block
-				Message message = mHandler.obtainMessage(User_Reg_Fail, 601);
+				Message message = mHandler.obtainMessage(User_Reg_Fail);
+				message.arg1 = 601 ;
 				message.sendToTarget();
 				e1.printStackTrace();
 			}
@@ -605,23 +624,27 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				String returncode = getValByTagName(dom, "UserRegistResult");// 返回码
 				if ("-2".equals(returncode)) {
 					Message message = mHandler
-							.obtainMessage(User_Reg_Fail, 602);
+							.obtainMessage(User_Reg_Fail);
+					message.arg1 = 602 ;
 					message.sendToTarget();
 				} else if ("0".equals(returncode)) {
 					Message message = mHandler
-							.obtainMessage(User_Reg_Fail, 603);
+							.obtainMessage(User_Reg_Fail);
+					message.arg1 = 603;
 					message.sendToTarget();
 				} else if ("1".equals(returncode)) {
-					Message message = mHandler.obtainMessage(User_Reg_Success,
-							600);
+					Message message = mHandler.obtainMessage(User_Reg_Success);
+					message.arg1 = 600 ;
 					message.sendToTarget();
 				} else if ("2".equals(returncode)) {
 					Message message = mHandler
-							.obtainMessage(User_Reg_Fail, 605);
+							.obtainMessage(User_Reg_Fail);
+					message.arg1 = 605;
 					message.sendToTarget();
 				} else {
 					Message message = mHandler
-							.obtainMessage(User_Reg_Fail, 604);
+							.obtainMessage(User_Reg_Fail);
+					message.arg1 = 604;
 					message.sendToTarget();
 				}
 				System.out
@@ -630,7 +653,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 
 			} catch (Exception ex) {
 				Log.d(TAG, "-->getResponseString:catch" + ex.getMessage());
-				Message message = mHandler.obtainMessage(User_Reg_Fail, 606);
+				Message message = mHandler.obtainMessage(User_Reg_Fail);
+				message.arg1 = 606 ; 
 				message.sendToTarget();
 			} finally {
 				try {
@@ -640,7 +664,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				} catch (Exception e) {
 					Log.d(TAG, "-->getResponseString:finally" + e.getMessage());
 					Message message = mHandler
-							.obtainMessage(User_Reg_Fail, 607);
+							.obtainMessage(User_Reg_Fail);
+					message.arg1 = 607;
 					message.sendToTarget();
 				}
 			}
@@ -659,7 +684,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				url = new URL(RequestUrl);
 			} catch (MalformedURLException e1) {
 				// TODO Auto-generated catch block
-				Message message = mHandler.obtainMessage(Device_Reg_Fail, 501);
+				Message message = mHandler.obtainMessage(Device_Reg_Fail);
+				message.arg1 = 501 ;
 				message.sendToTarget();
 				e1.printStackTrace();
 			}
@@ -702,30 +728,33 @@ public class ScreenLogin extends Activity implements OnClickListener {
 								+ returncode);
 
 				if ("-2".equals(returncode)) {
-					Message message = mHandler.obtainMessage(Device_Reg_Fail,
-							502);
+					Message message = mHandler.obtainMessage(Device_Reg_Fail);
+					message.arg1 = 502 ;
 					message.sendToTarget();
 				} else if ("0".equals(returncode)) {
-					Message message = mHandler.obtainMessage(Device_Reg_Fail,
-							503);
+					Message message = mHandler.obtainMessage(Device_Reg_Fail);
+					message.arg1 = 503;
 					message.sendToTarget();
 				} else if ("1".equals(returncode)) {
 					Message message = mHandler.obtainMessage(
-							Device_Reg_Success, 500);
+							Device_Reg_Success);
+					message.arg1 = 500 ;
 					message.sendToTarget();
 				} else if ("2".equals(returncode)) {
 					Message message = mHandler.obtainMessage(
-							Device_Reg_Success, 505);
+							Device_Reg_Fail);
+					message.arg1 = 505 ;
 					message.sendToTarget();
 				} else {
-					Message message = mHandler.obtainMessage(Device_Reg_Fail,
-							504);
+					Message message = mHandler.obtainMessage(Device_Reg_Fail);
+					message.arg1 = 504 ; 
 					message.sendToTarget();
 				}
 
 			} catch (Exception ex) {
 				Log.d(TAG, "-->getResponseString:catch" + ex.getMessage());
-				Message message = mHandler.obtainMessage(Device_Reg_Fail, 506);
+				Message message = mHandler.obtainMessage(Device_Reg_Fail);
+				message.arg1 = 506 ;
 				message.sendToTarget();
 			} finally {
 				try {
@@ -734,8 +763,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					httpConnection.disconnect();
 				} catch (Exception e) {
 					Log.d(TAG, "-->getResponseString:finally" + e.getMessage());
-					Message message = mHandler.obtainMessage(Device_Reg_Fail,
-							507);
+					Message message = mHandler.obtainMessage(Device_Reg_Fail);
+					message.arg1 = 507 ; 
 					message.sendToTarget();
 				}
 			}
@@ -754,8 +783,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				url = new URL(RequestUrl);
 			} catch (MalformedURLException e1) {
 				// TODO Auto-generated catch block
-				Message message = mHandler.obtainMessage(Bind_User_Device_Fail,
-						401);
+				Message message = mHandler.obtainMessage(Bind_User_Device_Fail);
+				message.arg1 = 401 ; 
 				message.sendToTarget();
 				e1.printStackTrace();
 			}
@@ -797,23 +826,28 @@ public class ScreenLogin extends Activity implements OnClickListener {
 								+ returncode);
 				if ("-2".equals(returncode)) {
 					Message message = mHandler.obtainMessage(
-							Bind_User_Device_Fail, 402);
+							Bind_User_Device_Fail);
+					message.arg1 = 402 ; 
 					message.sendToTarget();
 				} else if ("0".equals(returncode)) {
 					Message message = mHandler.obtainMessage(
-							Bind_User_Device_Fail, 403);
+							Bind_User_Device_Fail);
+					message.arg1 = 403 ; 
 					message.sendToTarget();
 				} else if ("1".equals(returncode)) {
 					Message message = mHandler.obtainMessage(
-							Bind_User_Device_Success, 400);
+							Bind_User_Device_Success);
+					message.arg1 = 400 ;
 					message.sendToTarget();
 				} else if ("2".equals(returncode)) {
 					Message message = mHandler.obtainMessage(
-							Bind_User_Device_Success, 405);
+							Bind_User_Device_Fail, 405);
+					message.arg1 = 405 ; 
 					message.sendToTarget();
 				} else {
 					Message message = mHandler.obtainMessage(
 							Bind_User_Device_Fail, 404);
+					message.arg1 = 404 ;
 					message.sendToTarget();
 				}
 
@@ -821,6 +855,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				Log.d(TAG, "-->getResponseString:catch" + ex.getMessage());
 				Message message = mHandler.obtainMessage(
 						Bind_User_Device_Success, 406);
+				message.arg1 = 406 ; 
 				message.sendToTarget();
 			} finally {
 				try {
@@ -830,7 +865,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				} catch (Exception e) {
 					Log.d(TAG, "-->getResponseString:finally" + e.getMessage());
 					Message message = mHandler.obtainMessage(
-							Bind_User_Device_Success, 407);
+							Bind_User_Device_Success);
+					message.arg1 = 407;
 					message.sendToTarget();
 				}
 			}
