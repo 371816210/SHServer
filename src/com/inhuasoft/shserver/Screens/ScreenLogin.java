@@ -38,6 +38,7 @@ import com.inhuasoft.shserver.IMSDroid;
 import com.inhuasoft.shserver.Main;
 import com.inhuasoft.shserver.R;
 import com.inhuasoft.shserver.Utils.MD5;
+import com.inhuasoft.shserver.Utils.RegexUtils;
 import com.inhuasoft.shserver.Utils.SipAdminUtils;
 
 import org.apache.http.HttpEntity;
@@ -243,9 +244,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 								@Override
 								public void onClick(DialogInterface dialog,
 										int which) {
-									ScreenLogin.this.editUserName.setText("");
-									ScreenLogin.this.editPassword.setText("");
-									ScreenLogin.this.editRePassword.setText("");
+									  ResetInput();
 
 								}
 							}, null, null);
@@ -309,156 +308,10 @@ public class ScreenLogin extends Activity implements OnClickListener {
 		}
 		return null;
 	}
-
-	class SipAddUserThread extends Thread {
-
-		public void run() {
-			String httpUrl = "http://sip.inhuasoft.cn/tools/users/user_management/user_management.php?action=add_verify&id=";
-			HttpPost request = new HttpPost(httpUrl);
-			HttpClient httpClient = new DefaultHttpClient();
-			List<NameValuePair> params = new ArrayList<NameValuePair>();
-			System.out.println("=================username:"
-					+ editUserName.getText());
-			params.add(new BasicNameValuePair("uname", editUserName.getText()
-					.toString()));
-			params.add(new BasicNameValuePair("email", editUserName.getText()
-					.toString() + "@inhuasoft.cn"));
-			params.add(new BasicNameValuePair("alias", editUserName.getText()
-					.toString()));
-			params.add(new BasicNameValuePair("domain", "115.28.9.71"));
-			params.add(new BasicNameValuePair("alias_type", "dbaliases"));
-			params.add(new BasicNameValuePair("passwd", editPassword.getText()
-					.toString()));
-			params.add(new BasicNameValuePair("confirm_passwd", editPassword
-					.getText().toString()));
-			HttpResponse response;
-			IMSDroid appCookie = ((IMSDroid) ScreenLogin.this.getApplication());
-			((AbstractHttpClient) httpClient).setCookieStore(appCookie
-					.getCookie());
-			try {
-				HttpEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
-				request.setEntity(entity);
-				response = httpClient.execute(request);
-
-				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-					String str = EntityUtils.toString(response.getEntity());
-					String strmd5 = MD5.getMD5(str);
-					if (str.contains("is already a valid user")) {
-						// sip_add_user = true;
-						Message message = mHandler.obtainMessage(
-								Sip_Add_Device_Success, 100);
-						message.sendToTarget();
-						System.out
-								.println("=================is already a valid user");
-					}
-					if (str.contains("New User added!")) {
-						Message message = mHandler.obtainMessage(
-								Sip_Add_Device_Success, 101);
-						message.sendToTarget();
-						System.out.println("New User added!");
-						// sip_add_user = true;
-					}
-					// System.out.println(" login in add user");
-				} else {
-					System.out.println("add user fail ");
-					// sip_add_user = false;
-					Message message = mHandler.obtainMessage(
-							Sip_Add_Device_Fail, 102);
-					message.sendToTarget();
-				}
-			} catch (ClientProtocolException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail,
-						102);
-				message.sendToTarget();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail,
-						103);
-				message.sendToTarget();
-			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail,
-						104);
-				message.sendToTarget();
-			}
-		}
-	}
-
-	class SipAddDeviceThread extends Thread {
-
-		public void run() {
-			String httpUrl = "http://sip.inhuasoft.cn/tools/users/user_management/user_management.php?action=add_verify&id=";
-			HttpPost request = new HttpPost(httpUrl);
-			HttpClient httpClient = new DefaultHttpClient();
-			List<NameValuePair> params = new ArrayList<NameValuePair>();
-			System.out.println("==========device=======username:"
-					+ getDeviceNo());
-			params.add(new BasicNameValuePair("uname", getDeviceNo()));
-			params.add(new BasicNameValuePair("email", getDeviceNo()
-					+ "@inhuasoft.cn"));
-			params.add(new BasicNameValuePair("alias", getDeviceNo()));
-			params.add(new BasicNameValuePair("domain", "115.28.9.71"));
-			params.add(new BasicNameValuePair("alias_type", "dbaliases"));
-			params.add(new BasicNameValuePair("passwd", getDeviceNo()));
-			params.add(new BasicNameValuePair("confirm_passwd", getDeviceNo()));
-			HttpResponse response;
-			IMSDroid appCookie = ((IMSDroid) ScreenLogin.this.getApplication());
-			((AbstractHttpClient) httpClient).setCookieStore(appCookie
-					.getCookie());
-			try {
-				HttpEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
-				request.setEntity(entity);
-				response = httpClient.execute(request);
-
-				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-					String str = EntityUtils.toString(response.getEntity());
-					String strmd5 = MD5.getMD5(str);
-					if (str.contains("is already a valid user")) {
-						// sip_add_user = true;
-						Message message = mHandler.obtainMessage(
-								Admin_Login_Success, 200);
-						message.sendToTarget();
-						System.out
-								.println("=================is already a valid user");
-					}
-					if (str.contains("New User added!")) {
-						Message message = mHandler.obtainMessage(
-								Admin_Login_Success, 201);
-						message.sendToTarget();
-						System.out.println("New User added!");
-						// sip_add_user = true;
-					}
-					// System.out.println(" login in add user");
-				} else {
-					System.out.println("add user fail ");
-					// sip_add_user = false;
-					Message message = mHandler.obtainMessage(Admin_Login_Fail,
-							202);
-					message.sendToTarget();
-				}
-			} catch (ClientProtocolException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				Message message = mHandler.obtainMessage(Admin_Login_Fail, 203);
-				message.sendToTarget();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				Message message = mHandler.obtainMessage(Admin_Login_Fail, 204);
-				message.sendToTarget();
-			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				Message message = mHandler.obtainMessage(Admin_Login_Fail, 205);
-				message.sendToTarget();
-			}
-		}
-	}
-
+	
+	
+	
+	
 	class SipAdminLoginThread extends Thread {
 
 		public void run() {
@@ -527,6 +380,275 @@ public class ScreenLogin extends Activity implements OnClickListener {
 			}
 		}
 	}
+	
+	
+
+	class SipAddUserThread extends Thread {
+
+		public void run() {
+			String httpUrl = "http://sip.inhuasoft.cn/tools/users/user_management/user_management.php?action=add_verify&id=";
+			HttpPost request = new HttpPost(httpUrl);
+			HttpClient httpClient = new DefaultHttpClient();
+			List<NameValuePair> params = new ArrayList<NameValuePair>();
+			System.out.println("=================username:"
+					+ editUserName.getText());
+			params.add(new BasicNameValuePair("uname", editUserName.getText()
+					.toString()));
+			params.add(new BasicNameValuePair("email", editUserName.getText()
+					.toString() + "@inhuasoft.cn"));
+			params.add(new BasicNameValuePair("alias", editUserName.getText()
+					.toString()));
+			params.add(new BasicNameValuePair("domain", "115.28.9.71"));
+			params.add(new BasicNameValuePair("alias_type", "dbaliases"));
+			params.add(new BasicNameValuePair("passwd", editPassword.getText()
+					.toString()));
+			params.add(new BasicNameValuePair("confirm_passwd", editPassword
+					.getText().toString()));
+			HttpResponse response;
+			IMSDroid appCookie = ((IMSDroid) ScreenLogin.this.getApplication());
+			((AbstractHttpClient) httpClient).setCookieStore(appCookie
+					.getCookie());
+			try {
+				HttpEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
+				request.setEntity(entity);
+				response = httpClient.execute(request);
+
+				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+					String str = EntityUtils.toString(response.getEntity());
+					String strmd5 = MD5.getMD5(str);
+					if (str.contains("is already a valid user")) {
+						// sip_add_user = true;
+						Message message = mHandler.obtainMessage(
+								Sip_Add_User_Success, 100);
+						message.sendToTarget();
+						System.out
+								.println("=================is already a valid user");
+					}
+					else if (str.contains("New User added!")) {
+						Message message = mHandler.obtainMessage(
+								Sip_Add_User_Success, 101);
+						message.sendToTarget();
+						System.out.println("New User added!");
+						// sip_add_user = true;
+					}
+					else {
+						System.out.println("add user fail ");
+						// sip_add_user = false;
+						Message message = mHandler.obtainMessage(
+								Sip_Add_User_Fail, 105);
+						message.sendToTarget();
+					}
+					// System.out.println(" login in add user");
+				} else {
+					System.out.println("add user fail ");
+					// sip_add_user = false;
+					Message message = mHandler.obtainMessage(
+							Sip_Add_User_Fail, 102);
+					message.sendToTarget();
+				}
+			} catch (ClientProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				Message message = mHandler.obtainMessage(Sip_Add_User_Fail,
+						102);
+				message.sendToTarget();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				Message message = mHandler.obtainMessage(Sip_Add_User_Fail,
+						103);
+				message.sendToTarget();
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				Message message = mHandler.obtainMessage(Sip_Add_User_Fail,
+						104);
+				message.sendToTarget();
+			}
+		}
+	}
+
+	class SipAddDeviceThread extends Thread {
+
+		public void run() {
+			String httpUrl = "http://sip.inhuasoft.cn/tools/users/user_management/user_management.php?action=add_verify&id=";
+			HttpPost request = new HttpPost(httpUrl);
+			HttpClient httpClient = new DefaultHttpClient();
+			List<NameValuePair> params = new ArrayList<NameValuePair>();
+			System.out.println("==========device=======username:"
+					+ getDeviceNo());
+			params.add(new BasicNameValuePair("uname", getDeviceNo()));
+			params.add(new BasicNameValuePair("email", getDeviceNo()
+					+ "@inhuasoft.cn"));
+			params.add(new BasicNameValuePair("alias", getDeviceNo()));
+			params.add(new BasicNameValuePair("domain", "115.28.9.71"));
+			params.add(new BasicNameValuePair("alias_type", "dbaliases"));
+			params.add(new BasicNameValuePair("passwd", getDeviceNo()));
+			params.add(new BasicNameValuePair("confirm_passwd", getDeviceNo()));
+			HttpResponse response;
+			IMSDroid appCookie = ((IMSDroid) ScreenLogin.this.getApplication());
+			((AbstractHttpClient) httpClient).setCookieStore(appCookie
+					.getCookie());
+			try {
+				HttpEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
+				request.setEntity(entity);
+				response = httpClient.execute(request);
+
+				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+					String str = EntityUtils.toString(response.getEntity());
+					String strmd5 = MD5.getMD5(str);
+					if (str.contains("is already a valid user")) {
+						// sip_add_user = true;
+						Message message = mHandler.obtainMessage(
+								Sip_Add_Device_Success, 200);
+						message.sendToTarget();
+						System.out
+								.println("=================is already a valid user");
+						return ;
+					} else if (str.contains("New User added!")) {
+						Message message = mHandler.obtainMessage(
+								Sip_Add_Device_Success, 201);
+						message.sendToTarget();
+						System.out.println("New User added!");
+						return ;
+						// sip_add_user = true;
+					}
+					else {
+						System.out.println("add user fail ");
+						// sip_add_user = false;
+						Message message = mHandler.obtainMessage(Sip_Add_Device_Fail,
+								206);
+						message.sendToTarget();
+						return ;
+					}
+					// System.out.println(" login in add user");
+				} else {
+					System.out.println("add user fail ");
+					// sip_add_user = false;
+					Message message = mHandler.obtainMessage(Sip_Add_Device_Fail,
+							202);
+					message.sendToTarget();
+					return ;
+				}
+			} catch (ClientProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail, 203);
+				message.sendToTarget();
+				return ;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail, 204);
+				message.sendToTarget();
+				return ;
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail, 205);
+				message.sendToTarget();
+				return ;
+			}
+		}
+	}
+
+	
+	
+	class UserRegThread extends Thread {
+
+		public void run() {
+			String RequestUrl = "http://ota.inhuasoft.cn/SHS_WS/ShsService.asmx?op=UserRegist";
+			URL url = null;
+			try {
+				url = new URL(RequestUrl);
+			} catch (MalformedURLException e1) {
+				// TODO Auto-generated catch block
+				Message message = mHandler.obtainMessage(User_Reg_Fail, 601);
+				message.sendToTarget();
+				e1.printStackTrace();
+			}
+			String envelope = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+					+ "<soap12:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap12=\"http://www.w3.org/2003/05/soap-envelope\">"
+					+ "<soap12:Header>"
+					+ "<MySoapHeader xmlns=\"http://tempuri.org/\">"
+					+ "<UserName>SysAdmin</UserName>"
+					+ "<PassWord>SysAdminSysAdmin</PassWord>"
+					+ "</MySoapHeader>" + "</soap12:Header>" + "<soap12:Body>"
+					+ "<UserRegist xmlns=\"http://tempuri.org/\">"
+					+ "<userName>" + editUserName.getText() + "</userName>"
+					+ "<passWord>" + editPassword.getText() + "</passWord>"
+					+ "<Mobile></Mobile>" + "<Email></Email>"
+					+ "<SipAccount>sip:" + editUserName.getText()
+					+ "@115.28.9.71</SipAccount>" + "<SipPwd>"
+					+ editPassword.getText() + "</SipPwd>" + "</UserRegist>"
+					+ "</soap12:Body>" + "</soap12:Envelope>";
+			HttpURLConnection httpConnection = null;
+			OutputStream output = null;
+			InputStream input = null;
+			try {
+				httpConnection = (HttpURLConnection) url.openConnection();
+				httpConnection.setRequestMethod("POST");
+				httpConnection.setRequestProperty("Content-Length",
+						String.valueOf(envelope.length()));
+				httpConnection.setRequestProperty("Content-Type",
+						"text/xml; charset=utf-8");
+				httpConnection.setDoOutput(true);
+				httpConnection.setDoInput(true);
+				output = httpConnection.getOutputStream();
+				output.write(envelope.getBytes());
+				output.flush();
+				input = httpConnection.getInputStream();
+				DocumentBuilderFactory factory = DocumentBuilderFactory
+						.newInstance();
+				DocumentBuilder builder = factory.newDocumentBuilder();
+				Document dom = builder.parse(input);
+				String returncode = getValByTagName(dom, "UserRegistResult");// ·µ»ØÂë
+				if ("-2".equals(returncode)) {
+					Message message = mHandler
+							.obtainMessage(User_Reg_Fail, 602);
+					message.sendToTarget();
+				} else if ("0".equals(returncode)) {
+					Message message = mHandler
+							.obtainMessage(User_Reg_Fail, 603);
+					message.sendToTarget();
+				} else if ("1".equals(returncode)) {
+					Message message = mHandler.obtainMessage(User_Reg_Success,
+							600);
+					message.sendToTarget();
+				} else if ("2".equals(returncode)) {
+					Message message = mHandler
+							.obtainMessage(User_Reg_Fail, 605);
+					message.sendToTarget();
+				} else {
+					Message message = mHandler
+							.obtainMessage(User_Reg_Fail, 604);
+					message.sendToTarget();
+				}
+				System.out
+						.println("=======UserRegThread======= return code is  "
+								+ returncode);
+
+			} catch (Exception ex) {
+				Log.d(TAG, "-->getResponseString:catch" + ex.getMessage());
+				Message message = mHandler.obtainMessage(User_Reg_Fail, 606);
+				message.sendToTarget();
+			} finally {
+				try {
+					output.close();
+					input.close();
+					httpConnection.disconnect();
+				} catch (Exception e) {
+					Log.d(TAG, "-->getResponseString:finally" + e.getMessage());
+					Message message = mHandler
+							.obtainMessage(User_Reg_Fail, 607);
+					message.sendToTarget();
+				}
+			}
+
+		}
+	}
+	
+	
 
 	class DeviceRegThread extends Thread {
 
@@ -621,99 +743,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 		}
 	}
 
-	class UserRegThread extends Thread {
 
-		public void run() {
-			String RequestUrl = "http://ota.inhuasoft.cn/SHS_WS/ShsService.asmx?op=UserRegist";
-			URL url = null;
-			try {
-				url = new URL(RequestUrl);
-			} catch (MalformedURLException e1) {
-				// TODO Auto-generated catch block
-				Message message = mHandler.obtainMessage(User_Reg_Fail, 601);
-				message.sendToTarget();
-				e1.printStackTrace();
-			}
-			String envelope = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-					+ "<soap12:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap12=\"http://www.w3.org/2003/05/soap-envelope\">"
-					+ "<soap12:Header>"
-					+ "<MySoapHeader xmlns=\"http://tempuri.org/\">"
-					+ "<UserName>SysAdmin</UserName>"
-					+ "<PassWord>SysAdminSysAdmin</PassWord>"
-					+ "</MySoapHeader>" + "</soap12:Header>" + "<soap12:Body>"
-					+ "<UserRegist xmlns=\"http://tempuri.org/\">"
-					+ "<userName>" + editUserName.getText() + "</userName>"
-					+ "<passWord>" + editPassword.getText() + "</passWord>"
-					+ "<Mobile></Mobile>" + "<Email></Email>"
-					+ "<SipAccount>sip:" + editUserName.getText()
-					+ "@115.28.9.71</SipAccount>" + "<SipPwd>"
-					+ editPassword.getText() + "</SipPwd>" + "</UserRegist>"
-					+ "</soap12:Body>" + "</soap12:Envelope>";
-			HttpURLConnection httpConnection = null;
-			OutputStream output = null;
-			InputStream input = null;
-			try {
-				httpConnection = (HttpURLConnection) url.openConnection();
-				httpConnection.setRequestMethod("POST");
-				httpConnection.setRequestProperty("Content-Length",
-						String.valueOf(envelope.length()));
-				httpConnection.setRequestProperty("Content-Type",
-						"text/xml; charset=utf-8");
-				httpConnection.setDoOutput(true);
-				httpConnection.setDoInput(true);
-				output = httpConnection.getOutputStream();
-				output.write(envelope.getBytes());
-				output.flush();
-				input = httpConnection.getInputStream();
-				DocumentBuilderFactory factory = DocumentBuilderFactory
-						.newInstance();
-				DocumentBuilder builder = factory.newDocumentBuilder();
-				Document dom = builder.parse(input);
-				String returncode = getValByTagName(dom, "UserRegistResult");// ·µ»ØÂë
-				if ("-2".equals(returncode)) {
-					Message message = mHandler
-							.obtainMessage(User_Reg_Fail, 602);
-					message.sendToTarget();
-				} else if ("0".equals(returncode)) {
-					Message message = mHandler
-							.obtainMessage(User_Reg_Fail, 603);
-					message.sendToTarget();
-				} else if ("1".equals(returncode)) {
-					Message message = mHandler.obtainMessage(User_Reg_Success,
-							600);
-					message.sendToTarget();
-				} else if ("2".equals(returncode)) {
-					Message message = mHandler
-							.obtainMessage(User_Reg_Fail, 605);
-					message.sendToTarget();
-				} else {
-					Message message = mHandler
-							.obtainMessage(User_Reg_Fail, 604);
-					message.sendToTarget();
-				}
-				System.out
-						.println("=======UserRegThread======= return code is  "
-								+ returncode);
-
-			} catch (Exception ex) {
-				Log.d(TAG, "-->getResponseString:catch" + ex.getMessage());
-				Message message = mHandler.obtainMessage(User_Reg_Fail, 606);
-				message.sendToTarget();
-			} finally {
-				try {
-					output.close();
-					input.close();
-					httpConnection.disconnect();
-				} catch (Exception e) {
-					Log.d(TAG, "-->getResponseString:finally" + e.getMessage());
-					Message message = mHandler
-							.obtainMessage(User_Reg_Fail, 607);
-					message.sendToTarget();
-				}
-			}
-
-		}
-	}
 
 	class BindUserDeviceThread extends Thread {
 
@@ -850,6 +880,67 @@ public class ScreenLogin extends Activity implements OnClickListener {
 		super.onDestroy();
 	}
 
+	private void ResetInput() {
+		editUserName.setText("");
+		editPassword.setText("");
+		editRePassword.setText("");
+	}
+	
+	private boolean ValidateInput(){
+		 if(!RegexUtils.checkUserName(editUserName.getText().toString()))
+		  {
+			 final AlertDialog username_error_dialog = CustomDialog
+						.create(ScreenLogin.this, R.drawable.exit_48, null,
+								" The username is 4-16 any combination of characters "
+								 , "OK",
+								new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog,
+											int which) {
+									}
+								}, null, null);
+			 username_error_dialog.show();
+			 ResetInput();
+		        return false;	   
+		  }
+		 if(!RegexUtils.checkPassWord(editPassword.getText().toString()))
+		  {
+			 final AlertDialog password_error_dialog = CustomDialog
+						.create(ScreenLogin.this, R.drawable.exit_48, null,
+								" The password is 6-16 any combination of characters "
+								 , "OK",
+								new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog,
+											int which) {
+									}
+								}, null, null);
+			 password_error_dialog.show();
+			 editPassword.setText("");
+			 editRePassword.setText("");
+		        return false;	   
+		  }
+		 if(!editPassword.getText().toString().equals(editRePassword.getText().toString()))
+		 {
+			 final AlertDialog repassword_error_dialog = CustomDialog
+						.create(ScreenLogin.this, R.drawable.exit_48, null,
+								" The password and confirm password must be the same"
+								 , "OK",
+								new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog,
+											int which) {
+									}
+								}, null, null);
+			 repassword_error_dialog.show();
+			 editPassword.setText("");
+			 editRePassword.setText("");
+			 return false;
+		 }
+		 
+		 return true;
+	}
+	
 	@Override
 	public void onClick(View arg0) {
 		// TODO Auto-generated method stub
@@ -863,9 +954,11 @@ public class ScreenLogin extends Activity implements OnClickListener {
 			// Intent intent = new Intent();
 			// intent.setClass(getApplicationContext(), ScreenMainAV.class);
 			// startActivity(intent);
-
-			Message message = mHandler.obtainMessage(Admin_Login_Action);
-			message.sendToTarget();
+            if(ValidateInput())
+            {
+			  Message message = mHandler.obtainMessage(Admin_Login_Action);
+			  message.sendToTarget();
+            }
 		}
 	}
 

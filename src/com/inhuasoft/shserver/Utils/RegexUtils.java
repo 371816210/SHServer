@@ -136,5 +136,32 @@ public final class RegexUtils {
         String regex = "[1-9](\\d{1,2})?\\.(0|([1-9](\\d{1,2})?))\\.(0|([1-9](\\d{1,2})?))\\.(0|([1-9](\\d{1,2})?))";
         return Pattern.matches(regex, ipAddress);
     }
-     
+    
+    /**
+     * 检测用户名
+     * @param 用户名
+     * @retur n验证成功返回true，验证失败返回false
+     */
+	public static boolean checkUserName(String username) {   
+		int lenght = username.length();
+		if (lenght < 4 || lenght > 16) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+    /**
+     * 检测密码
+     * @param 密码
+     * @return 验证成功返回true，验证失败返回false
+     */
+    public static boolean checkPassWord(String password) {
+    	int lenght = password.length();
+    	if (lenght < 6 || lenght > 16) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+    
 }
