@@ -131,8 +131,9 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				int admin_login_errorcode = msg.arg1;
 				final AlertDialog admin_login_dialog = CustomDialog.create(
 						ScreenLogin.this, R.drawable.exit_48, null,
-						" a error has occurred, error code is  " + admin_login_errorcode,
-						"exit", new DialogInterface.OnClickListener() {
+						" a error has occurred, error code is  "
+								+ admin_login_errorcode, "exit",
+						new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog,
 									int which) {
@@ -143,7 +144,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				admin_login_dialog.show();
 				break;
 			case Admin_Login_Success:
-				Message sip_add_user_message = mHandler.obtainMessage(Sip_Add_User_Action);
+				Message sip_add_user_message = mHandler
+						.obtainMessage(Sip_Add_User_Action);
 				sip_add_user_message.sendToTarget();
 				break;
 			case Sip_Add_User_Action:
@@ -154,8 +156,9 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				int sip_add_user_errorcode = msg.arg1;
 				final AlertDialog sip_add_user_dialog = CustomDialog.create(
 						ScreenLogin.this, R.drawable.exit_48, null,
-						" a error has occurred, error code is  " + sip_add_user_errorcode,
-						"exit", new DialogInterface.OnClickListener() {
+						" a error has occurred, error code is  "
+								+ sip_add_user_errorcode, "exit",
+						new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog,
 									int which) {
@@ -178,8 +181,9 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				int sip_add_device_errorcode = msg.arg1;
 				final AlertDialog sip_add_device_dialog = CustomDialog.create(
 						ScreenLogin.this, R.drawable.exit_48, null,
-						" a error has occurred, error code is  " + sip_add_device_errorcode,
-						"exit", new DialogInterface.OnClickListener() {
+						" a error has occurred, error code is  "
+								+ sip_add_device_errorcode, "exit",
+						new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog,
 									int which) {
@@ -200,15 +204,16 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				break;
 			case Device_Reg_Success:
 				Message bind_user_device_message = mHandler
-				.obtainMessage(Bind_User_Device_Action);
+						.obtainMessage(Bind_User_Device_Action);
 				bind_user_device_message.sendToTarget();
 				break;
 			case Device_Reg_Fail:
 				int device_reg_errorcode = msg.arg1;
 				final AlertDialog device_reg_dialog = CustomDialog.create(
 						ScreenLogin.this, R.drawable.exit_48, null,
-						" a error has occurred, error code is  " + device_reg_errorcode,
-						"exit", new DialogInterface.OnClickListener() {
+						" a error has occurred, error code is  "
+								+ device_reg_errorcode, "exit",
+						new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog,
 									int which) {
@@ -224,23 +229,42 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				break;
 			case User_Reg_Success:
 				Message device_reg_message = mHandler
-				.obtainMessage(Device_Reg_Action);
+						.obtainMessage(Device_Reg_Action);
 				device_reg_message.sendToTarget();
 				break;
 			case User_Reg_Fail:
 				int user_reg_errorcode = msg.arg1;
-				final AlertDialog user_reg_dialog = CustomDialog.create(
-						ScreenLogin.this, R.drawable.exit_48, null,
-						" a error has occurred, error code is  " + user_reg_errorcode,
-						"exit", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog,
-									int which) {
-								ScreenLogin.this.finish();
+				if (user_reg_errorcode == 605) {
+					final AlertDialog user_reg_dialog = CustomDialog.create(
+							ScreenLogin.this, R.drawable.exit_48, null,
+							"The user name has been registered!"
+									+ user_reg_errorcode, "OK",
+							new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog,
+										int which) {
+									ScreenLogin.this.editUserName.setText("");
+									ScreenLogin.this.editPassword.setText("");
+									ScreenLogin.this.editRePassword.setText("");
 
-							}
-						}, null, null);
-				user_reg_dialog.show();
+								}
+							}, null, null);
+					user_reg_dialog.show();
+				} else {
+					final AlertDialog user_reg_dialog = CustomDialog.create(
+							ScreenLogin.this, R.drawable.exit_48, null,
+							" a error has occurred, error code is  "
+									+ user_reg_errorcode, "exit",
+							new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog,
+										int which) {
+									ScreenLogin.this.finish();
+
+								}
+							}, null, null);
+					user_reg_dialog.show();
+				}
 				break;
 			case Bind_User_Device_Action:
 				BindUserDeviceThread thread_bind_user_device = new BindUserDeviceThread();
@@ -250,17 +274,18 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				break;
 			case Bind_User_Device_Fail:
 				int bind_user_device_errorcode = msg.arg1;
-				final AlertDialog bind_user_device_dialog = CustomDialog.create(
-						ScreenLogin.this, R.drawable.exit_48, null,
-						" a error has occurred, error code is  " + bind_user_device_errorcode,
-						"exit", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog,
-									int which) {
-								ScreenLogin.this.finish();
+				final AlertDialog bind_user_device_dialog = CustomDialog
+						.create(ScreenLogin.this, R.drawable.exit_48, null,
+								" a error has occurred, error code is  "
+										+ bind_user_device_errorcode, "exit",
+								new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog,
+											int which) {
+										ScreenLogin.this.finish();
 
-							}
-						}, null, null);
+									}
+								}, null, null);
 				bind_user_device_dialog.show();
 				break;
 
@@ -550,8 +575,9 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				DocumentBuilder builder = factory.newDocumentBuilder();
 				Document dom = builder.parse(input);
 				String returncode = getValByTagName(dom, "DeviceRegistResult");// ·µ»ØÂë
-				System.out.println("============== return code is  "
-						+ returncode);
+				System.out
+						.println("=======DeviceRegThread======= return code is  "
+								+ returncode);
 
 				if ("-2".equals(returncode)) {
 					Message message = mHandler.obtainMessage(Device_Reg_Fail,
@@ -657,16 +683,17 @@ public class ScreenLogin extends Activity implements OnClickListener {
 							600);
 					message.sendToTarget();
 				} else if ("2".equals(returncode)) {
-					Message message = mHandler.obtainMessage(User_Reg_Success,
-							605);
+					Message message = mHandler
+							.obtainMessage(User_Reg_Fail, 605);
 					message.sendToTarget();
 				} else {
 					Message message = mHandler
 							.obtainMessage(User_Reg_Fail, 604);
 					message.sendToTarget();
 				}
-				System.out.println("============== return code is  "
-						+ returncode);
+				System.out
+						.println("=======UserRegThread======= return code is  "
+								+ returncode);
 
 			} catch (Exception ex) {
 				Log.d(TAG, "-->getResponseString:catch" + ex.getMessage());
@@ -735,8 +762,9 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				DocumentBuilder builder = factory.newDocumentBuilder();
 				Document dom = builder.parse(input);
 				String returncode = getValByTagName(dom, "BindUserDeviceResult");// ·µ»ØÂë
-				System.out.println("============== return code is  "
-						+ returncode);
+				System.out
+						.println("======BindUserDeviceThread======== return code is  "
+								+ returncode);
 				if ("-2".equals(returncode)) {
 					Message message = mHandler.obtainMessage(
 							Bind_User_Device_Fail, 402);
