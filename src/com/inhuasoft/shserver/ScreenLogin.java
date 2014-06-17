@@ -39,6 +39,7 @@ import com.inhuasoft.shserver.IMSDroid;
 import com.inhuasoft.shserver.Main;
 import com.inhuasoft.shserver.R;
 import com.inhuasoft.shserver.Screens.BaseScreen;
+import com.inhuasoft.shserver.Screens.ScreenHome;
 import com.inhuasoft.shserver.Screens.BaseScreen.SCREEN_TYPE;
 import com.inhuasoft.shserver.Screens.IBaseScreen;
 import com.inhuasoft.shserver.Services.IScreenService;
@@ -120,31 +121,41 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 	EditText editUserName, editPassword, editRePassword;
 	TextView txtMsginfo;
 	CheckBox chkMsginfo;
-	private boolean SysIsReg = false;
-	private boolean SysIsLogin = false;
 	private Handler mMainHandler;
+	
+	
+	public static final int ACTION_NONE = 0;
+	public static final int ACTION_RESTORE_LAST_STATE = 1;
+	public static final int ACTION_SHOW_AVSCREEN = 2;
+	public static final int ACTION_SHOW_CONTSHARE_SCREEN = 3;
+	public static final int ACTION_SHOW_SMS = 4;
+	public static final int ACTION_SHOW_CHAT_SCREEN = 5;
+	
 
-	private static final int Admin_Login_Action = 0X01;
-	private static final int Admin_Login_Fail = 0X02;
-	private static final int Admin_Login_Success = 0X03;
-	private static final int Sip_Add_User_Action = 0X04;
-	private static final int Sip_Add_User_Fail = 0X05;
-	private static final int Sip_Add_User_Success = 0X06;
-	private static final int Sip_Add_Device_Action = 0X07;
-	private static final int Sip_Add_Device_Fail = 0X08;
-	private static final int Sip_Add_Device_Success = 0X09;
-	private static final int Device_Reg_Action = 0X010;
-	private static final int Device_Reg_Success = 0X011;
-	private static final int Device_Reg_Fail = 0X012;
-	private static final int User_Reg_Action = 0X013;
-	private static final int User_Reg_Success = 0X014;
-	private static final int User_Reg_Fail = 0X015;
-	private static final int Bind_User_Device_Action = 0X016;
-	private static final int Bind_User_Device_Success = 0X017;
-	private static final int Bind_User_Device_Fail = 0X018;
-	private static final int GetUserByDevice_Action = 0x19;
-	private static final int GetUserByDevice_Success = 0x20;
-	private static final int GetUserByDevice_Fail = 0x21;
+	private static final int Admin_Login_Action = 0X06;
+	private static final int Admin_Login_Fail = 0X07;
+	private static final int Admin_Login_Success = 0X08;
+	private static final int Sip_Add_User_Action = 0X09;
+	private static final int Sip_Add_User_Fail = 0X10;
+	private static final int Sip_Add_User_Success = 0X11;
+	private static final int Sip_Add_Device_Action = 0X12;
+	private static final int Sip_Add_Device_Fail = 0X13;
+	private static final int Sip_Add_Device_Success = 0X14;
+	private static final int Device_Reg_Action = 0X15;
+	private static final int Device_Reg_Success = 0X16;
+	private static final int Device_Reg_Fail = 0X17;
+	private static final int User_Reg_Action = 0X18;
+	private static final int User_Reg_Success = 0X019;
+	private static final int User_Reg_Fail = 0X20;
+	private static final int Bind_User_Device_Action = 0X21;
+	private static final int Bind_User_Device_Success = 0X22;
+	private static final int Bind_User_Device_Fail = 0X23;
+	private static final int GetUserByDevice_Action = 0x24;
+	private static final int GetUserByDevice_Success = 0x25;
+	private static final int GetUserByDevice_Fail = 0x26;
+	private static final int Show_Reg_UI = 0x27;
+	private static final int Show_Login_UI = 0x28;
+	private static final int StartMain = 0x29;
 
 	public ScreenLogin() {
 		super();
@@ -156,6 +167,26 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 				.getConfigurationService();
 	}
 
+	 private void  SetSystemInfo() {
+		 mConfigurationService.putString(NgnConfigurationEntry.DEFAULT_IDENTITY_IMPU,"sip:"+getDeviceNo()+"@115.28.9.71");
+		 mConfigurationService.putString(NgnConfigurationEntry.DEFAULT_IDENTITY_IMPI, getDeviceNo());
+		 mConfigurationService.putString(NgnConfigurationEntry.DEFAULT_IDENTITY_PASSWORD, getDeviceNo());
+		 //注册成功，写入配置信息
+		 mConfigurationService.putBoolean(NgnConfigurationEntry.DEVICE_REG, true);
+         //登录成功，写入配置信息
+		 mConfigurationService.putBoolean(NgnConfigurationEntry.DEVICE_REG, true);
+		 mConfigurationService.putString(NgnConfigurationEntry.USERNAME,editUserName.getText().toString());
+		 mConfigurationService.putString(NgnConfigurationEntry.USER_PASSWORD,editPassword.getText().toString());
+		 
+	}
+	 
+	 private void  StartMain() {
+		 if(mScreenService != null )
+		 {
+		   mScreenService.show(ScreenHome.class);
+		 }
+	}
+	
 	private Handler mHandler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
@@ -231,7 +262,7 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 				sip_add_device_message.sendToTarget();
 				break;
 			case Sip_Add_Device_Action:
-				SipAddUserThread thread_add_device = new SipAddUserThread();
+				SipAddDeviceThread thread_add_device = new SipAddDeviceThread();
 				thread_add_device.start();
 				break;
 			case Sip_Add_Device_Fail:
@@ -246,8 +277,7 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 										public void onClick(
 												DialogInterface dialog,
 												int which) {
-											// ScreenLogin.this.finish();
-											// enter login window
+											    ScreenLogin.this.finish();
 
 										}
 									}, null, null);
@@ -363,7 +393,8 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 				thread_bind_user_device.start();
 				break;
 			case Bind_User_Device_Success:
-
+				SetSystemInfo();
+				StartMain();
 				break;
 			case Bind_User_Device_Fail:
 				int bind_user_device_errorcode = msg.arg1;
@@ -386,10 +417,32 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 				thread_get_user_by_device.start();
 				break;
 			case GetUserByDevice_Fail:
+				int get_user_by_device_errorcode = msg.arg1;
+				final AlertDialog get_user_by_device_dialog = CustomDialog
+						.create(ScreenLogin.this, R.drawable.exit_48, null,
+								" A error has occurred,the error code is  "
+										+ get_user_by_device_errorcode, "exit",
+								new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog,
+											int which) {
+										ScreenLogin.this.finish();
 
+									}
+								}, null, null);
+				get_user_by_device_dialog.show(); 
 				break;
 			case GetUserByDevice_Success:
-
+				
+				break;
+			case Show_Reg_UI:
+				SetRegUI();
+				break;
+			case Show_Login_UI:
+				SetLoginUI();
+				break;
+			case StartMain:
+				StartMain();
 				break;
 			default:
 				super.handleMessage(msg);// 这里最好对不需要或者不关心的消息抛给父类，避免丢失消息
@@ -659,7 +712,7 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 								.obtainMessage(Sip_Add_Device_Success);
 						message.arg1 = 201;
 						message.sendToTarget();
-						System.out.println("New User added!");
+						System.out.println("New device added!");
 						return;
 						// sip_add_user = true;
 					} else {
@@ -1055,18 +1108,24 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 				} else {
 					String username = ParserXml(returncode, "UserName");
 					if (username != null) {//设备已经注册
-						mConfigurationService.putBoolean(
-								NgnConfigurationEntry.DEVICE_REG, true);
-						Message message = mHandler
-								.obtainMessage(GetUserByDevice_Success);
-						message.arg1 = 703;
-						message.sendToTarget();
+						mConfigurationService.putBoolean(NgnConfigurationEntry.DEVICE_REG, true);
+						mConfigurationService.putString(NgnConfigurationEntry.USERNAME, editUserName.getText().toString());
+						mConfigurationService.putString(NgnConfigurationEntry.USER_PASSWORD, editPassword.getText().toString());
+						if(!mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_LOGIN, NgnConfigurationEntry.DEFAULT_DEVICE_LOGIN))
+						{
+							//没有登录，则显示登录界面
+							//SetLoginUI();
+							Message message = mHandler.obtainMessage(Show_Login_UI);
+							message.sendToTarget();
+						}
+						else { 
+							StartMain();
+						}
 					}
 					else {
 						// 设备没有注册，显示登陆界面
-						Message message = mHandler
-								.obtainMessage(GetUserByDevice_Success);
-						message.arg1 = 704;
+						//SetRegUI();
+						Message message = mHandler.obtainMessage(Show_Reg_UI);
 						message.sendToTarget();
 					}
 
@@ -1125,9 +1184,9 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
         
     	if (!mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_REG,
 				NgnConfigurationEntry.DEFAULT_DEVICE_REG)) {
-			//Message message = mHandler.obtainMessage(GetUserByDevice_Action);
-			//message.sendToTarget();
-			SetLoginUI();
+			Message message = mHandler.obtainMessage(GetUserByDevice_Action);
+			message.sendToTarget();
+			//SetLoginUI();
 		}
     	
 		mMainHandler = new Handler();
@@ -1150,14 +1209,14 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 	}
 	
 	
-	private void SetRegUI()
+	public void SetRegUI()
 	{
 		editRePassword.setVisibility(View.VISIBLE);
 		txtMsginfo.setVisibility(View.VISIBLE);
 		chkMsginfo.setVisibility(View.VISIBLE);
 		btnSubmit.setText("Sign Up");
 	}
-	private void SetLoginUI()
+	public void SetLoginUI()
 	{
 		editRePassword.setVisibility(View.GONE);
 		txtMsginfo.setVisibility(View.GONE);
