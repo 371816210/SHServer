@@ -26,6 +26,7 @@ import java.util.Map;
 import com.inhuasoft.shserver.Engine;
 import com.inhuasoft.shserver.IMSDroid;
 import com.inhuasoft.shserver.Main;
+import com.inhuasoft.shserver.ScreenLogin;
 import com.inhuasoft.shserver.R;
 import com.inhuasoft.shserver.Screens.IBaseScreen;
 import com.inhuasoft.shserver.Screens.ScreenHome;
@@ -222,11 +223,11 @@ public class ScreenService extends NgnBaseService implements IScreenService {
 
 	@Override
 	public IBaseScreen getCurrentScreen() {
-		return (IBaseScreen)((Main)Engine.getInstance().getMainActivity()).getLocalActivityManager().getCurrentActivity();
+		return (IBaseScreen)((ScreenLogin)Engine.getInstance().getMainActivity()).getLocalActivityManager().getCurrentActivity();
 	}
 
 	@Override
 	public IBaseScreen getScreen(String id) {
-		return (IBaseScreen)((Main)Engine.getInstance().getMainActivity()).getLocalActivityManager().getActivity(id);
+		return (IBaseScreen)((ScreenLogin)Engine.getInstance().getMainActivity()).getLocalActivityManager().getActivity(id);
 	}
 }

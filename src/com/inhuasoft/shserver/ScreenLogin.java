@@ -17,7 +17,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc., 
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.inhuasoft.shserver.Screens;
+package com.inhuasoft.shserver;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -38,7 +38,9 @@ import com.inhuasoft.shserver.Engine;
 import com.inhuasoft.shserver.IMSDroid;
 import com.inhuasoft.shserver.Main;
 import com.inhuasoft.shserver.R;
+import com.inhuasoft.shserver.Screens.BaseScreen;
 import com.inhuasoft.shserver.Screens.BaseScreen.SCREEN_TYPE;
+import com.inhuasoft.shserver.Screens.IBaseScreen;
 import com.inhuasoft.shserver.Services.IScreenService;
 import com.inhuasoft.shserver.Utils.MD5;
 import com.inhuasoft.shserver.Utils.RegexUtils;
@@ -76,6 +78,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import android.R.integer;
 import android.app.Activity;
+import android.app.ActivityGroup;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -99,13 +102,14 @@ import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
 
-public class ScreenLogin extends Activity implements OnClickListener {
+public class ScreenLogin extends ActivityGroup implements OnClickListener {
 	private static String TAG = ScreenLogin.class.getCanonicalName();
 
 	private final Engine mEngine;
@@ -114,6 +118,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 
 	Button btnSubmit;
 	EditText editUserName, editPassword, editRePassword;
+	TextView txtMsginfo;
+	CheckBox chkMsginfo;
 	private boolean SysIsReg = false;
 	private boolean SysIsLogin = false;
 	private Handler mMainHandler;
@@ -1047,8 +1053,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					message.arg1 = 702;
 					message.sendToTarget();
 				} else {
-					String username = ParserXml(returncode, "UserName");// 返回码
-					if (username != null) {
+					String username = ParserXml(returncode, "UserName");
+					if (username != null) {//设备已经注册
 						mConfigurationService.putBoolean(
 								NgnConfigurationEntry.DEVICE_REG, true);
 						Message message = mHandler
@@ -1057,6 +1063,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 						message.sendToTarget();
 					}
 					else {
+						// 设备没有注册，显示登陆界面
 						Message message = mHandler
 								.obtainMessage(GetUserByDevice_Success);
 						message.arg1 = 704;
@@ -1104,11 +1111,6 @@ public class ScreenLogin extends Activity implements OnClickListener {
 			thread.setPriority(Thread.MAX_PRIORITY);
 			thread.start();
 		}
-		if (!mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_REG,
-				NgnConfigurationEntry.DEFAULT_DEVICE_REG)) {
-			Message message = mHandler.obtainMessage(GetUserByDevice_Action);
-			message.sendToTarget();
-		}
 
 		setContentView(R.layout.screen_box_login);
 		setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
@@ -1118,7 +1120,16 @@ public class ScreenLogin extends Activity implements OnClickListener {
 		editUserName = (EditText) findViewById(R.id.edit_username);
 		editPassword = (EditText) findViewById(R.id.edit_password);
 		editRePassword = (EditText) findViewById(R.id.edit_checkpassword);
-
+		txtMsginfo = (TextView)findViewById(R.id.txt_msginfo);
+        chkMsginfo =(CheckBox)findViewById(R.id.chk_msginfo);
+        
+    	if (!mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_REG,
+				NgnConfigurationEntry.DEFAULT_DEVICE_REG)) {
+			//Message message = mHandler.obtainMessage(GetUserByDevice_Action);
+			//message.sendToTarget();
+			SetLoginUI();
+		}
+    	
 		mMainHandler = new Handler();
 
 	}
@@ -1136,6 +1147,22 @@ public class ScreenLogin extends Activity implements OnClickListener {
 		editUserName.setText("");
 		editPassword.setText("");
 		editRePassword.setText("");
+	}
+	
+	
+	private void SetRegUI()
+	{
+		editRePassword.setVisibility(View.VISIBLE);
+		txtMsginfo.setVisibility(View.VISIBLE);
+		chkMsginfo.setVisibility(View.VISIBLE);
+		btnSubmit.setText("Sign Up");
+	}
+	private void SetLoginUI()
+	{
+		editRePassword.setVisibility(View.GONE);
+		txtMsginfo.setVisibility(View.GONE);
+		chkMsginfo.setVisibility(View.GONE);
+		btnSubmit.setText("Sign In");
 	}
 
 	private boolean ValidateInput() {
