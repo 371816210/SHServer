@@ -156,6 +156,9 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 	private static final int Show_Reg_UI = 0x27;
 	private static final int Show_Login_UI = 0x28;
 	private static final int StartMain = 0x29;
+	private static final int User_Login_Action = 0x30;
+	private static final int User_Login_Success = 0x31;
+	private static final int User_Login_Fail = 0x32;
 
 	public ScreenLogin() {
 		super();
@@ -174,9 +177,13 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 		 //注册成功，写入配置信息
 		 mConfigurationService.putBoolean(NgnConfigurationEntry.DEVICE_REG, true);
          //登录成功，写入配置信息
-		 mConfigurationService.putBoolean(NgnConfigurationEntry.DEVICE_REG, true);
+		 mConfigurationService.putBoolean(NgnConfigurationEntry.DEVICE_LOGIN, true);
 		 mConfigurationService.putString(NgnConfigurationEntry.USERNAME,editUserName.getText().toString());
 		 mConfigurationService.putString(NgnConfigurationEntry.USER_PASSWORD,editPassword.getText().toString());
+		 
+		 if(!mConfigurationService.commit()){
+				Log.e(TAG, "Failed to Commit() configuration");
+			}
 		 
 	}
 	 
@@ -443,6 +450,51 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 				break;
 			case StartMain:
 				StartMain();
+				break;
+			case User_Login_Action:
+				UserLoginThread thread_user_login = new UserLoginThread();
+				thread_user_login.start();
+				break;
+			case User_Login_Success:
+				mConfigurationService.putBoolean(NgnConfigurationEntry.DEVICE_LOGIN, true);
+				 if(!mConfigurationService.commit()){
+						Log.e(TAG, "Failed to Commit() configuration");
+					}
+				StartMain();
+				break;
+			case User_Login_Fail:
+				int user_login_fail_errorcode = msg.arg1;
+				if(user_login_fail_errorcode == 802)
+				{
+				final AlertDialog user_login_fail_dialog = CustomDialog
+						.create(ScreenLogin.this, R.drawable.exit_48, null,
+								" The user name or password is not correct. ", "exit",
+								new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog,
+											int which) {
+										ScreenLogin.this.finish();
+
+									}
+								}, null, null);
+				user_login_fail_dialog.show(); 
+				}
+				else 
+				{
+					final AlertDialog user_login_fail_dialog = CustomDialog
+							.create(ScreenLogin.this, R.drawable.exit_48, null,
+									" A error has occurred,the error code is  "
+											+ user_login_fail_errorcode, "exit",
+									new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog,
+												int which) {
+											ScreenLogin.this.finish();
+
+										}
+									}, null, null);
+					user_login_fail_dialog.show(); 
+				}
 				break;
 			default:
 				super.handleMessage(msg);// 这里最好对不需要或者不关心的消息抛给父类，避免丢失消息
@@ -1111,6 +1163,9 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 						mConfigurationService.putBoolean(NgnConfigurationEntry.DEVICE_REG, true);
 						mConfigurationService.putString(NgnConfigurationEntry.USERNAME, editUserName.getText().toString());
 						mConfigurationService.putString(NgnConfigurationEntry.USER_PASSWORD, editPassword.getText().toString());
+						if(!mConfigurationService.commit()){
+							Log.e(TAG, "Failed to Commit() configuration");
+						}
 						if(!mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_LOGIN, NgnConfigurationEntry.DEFAULT_DEVICE_LOGIN))
 						{
 							//没有登录，则显示登录界面
@@ -1119,7 +1174,8 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 							message.sendToTarget();
 						}
 						else { 
-							StartMain();
+							Message message = mHandler.obtainMessage(StartMain);
+							message.sendToTarget();
 						}
 					}
 					else {
@@ -1153,6 +1209,91 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 		}
 	}
 
+	
+	
+	class UserLoginThread extends Thread {
+
+		public void run() {
+			String RequestUrl = "http://ota.inhuasoft.cn/SHS_WS/ShsService.asmx?op=GetUserByDevice";
+			URL url = null;
+			try {
+				url = new URL(RequestUrl);
+			} catch (MalformedURLException e1) {
+				// TODO Auto-generated catch block
+				Message message = mHandler.obtainMessage(GetUserByDevice_Fail);
+				message.arg1 = 701;
+				message.sendToTarget();
+				e1.printStackTrace();
+			}
+			String envelope = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+					+ "<soap12:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap12=\"http://www.w3.org/2003/05/soap-envelope\">"
+					+ "<soap12:Header>"
+					+ "<MySoapHeader xmlns=\"http://tempuri.org/\">"
+					+ "<UserName>"+editUserName.getText().toString()+"</UserName>"
+					+ "<PassWord>"+editPassword.getText().toString()+"</PassWord>"
+					+ "</MySoapHeader>" + "</soap12:Header>" + "<soap12:Body>"
+					+ "<GetUserByDevice xmlns=\"http://tempuri.org/\">"
+					+ "<DeviceNo>" + getDeviceNo() + "</DeviceNo>"
+					+ "</GetUserByDevice>" + "</soap12:Body>"
+					+ "</soap12:Envelope>";
+			HttpURLConnection httpConnection = null;
+			OutputStream output = null;
+			InputStream input = null;
+			try {
+				httpConnection = (HttpURLConnection) url.openConnection();
+				httpConnection.setRequestMethod("POST");
+				httpConnection.setRequestProperty("Content-Length",
+						String.valueOf(envelope.length()));
+				httpConnection.setRequestProperty("Content-Type",
+						"text/xml; charset=utf-8");
+				httpConnection.setDoOutput(true);
+				httpConnection.setDoInput(true);
+				output = httpConnection.getOutputStream();
+				output.write(envelope.getBytes());
+				output.flush();
+				input = httpConnection.getInputStream();
+				DocumentBuilderFactory factory = DocumentBuilderFactory
+						.newInstance();
+				DocumentBuilder builder = factory.newDocumentBuilder();
+				Document dom = builder.parse(input);
+				String returncode = getValByTagName(dom,
+						"GetUserByDeviceResult");// 返回码
+				System.out
+						.println("======GetUserByDeviceResult======== return code is  "
+								+ returncode);
+				if ("-2".equals(returncode)) {
+					Message message = mHandler.obtainMessage(User_Login_Fail);
+					message.arg1 = 802;
+					message.sendToTarget();
+				} 
+				else 
+				{
+					Message message = mHandler.obtainMessage(User_Login_Success);
+					message.sendToTarget();
+				}
+
+			} catch (Exception ex) {
+				Log.d(TAG, "-->getResponseString:catch" + ex.getMessage());
+				Message message = mHandler.obtainMessage(User_Login_Fail);
+				message.arg1 = 806;
+				message.sendToTarget();
+			} finally {
+				try {
+					output.close();
+					input.close();
+					httpConnection.disconnect();
+				} catch (Exception e) {
+					Log.d(TAG, "-->getResponseString:finally" + e.getMessage());
+					Message message = mHandler
+							.obtainMessage(User_Login_Fail);
+					message.arg1 = 807;
+					message.sendToTarget();
+				}
+			}
+
+		}
+	}
+	
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
@@ -1186,8 +1327,13 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 				NgnConfigurationEntry.DEFAULT_DEVICE_REG)) {
 			Message message = mHandler.obtainMessage(GetUserByDevice_Action);
 			message.sendToTarget();
-			//SetLoginUI();
-		}
+		}else if(mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_REG,
+				NgnConfigurationEntry.DEFAULT_DEVICE_REG) && !mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_LOGIN,
+				NgnConfigurationEntry.DEFAULT_DEVICE_LOGIN))
+    	{
+    		Message message = mHandler.obtainMessage(Show_Login_UI);
+			message.sendToTarget();
+    	}
     	
 		mMainHandler = new Handler();
 
@@ -1224,7 +1370,7 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 		btnSubmit.setText("Sign In");
 	}
 
-	private boolean ValidateInput() {
+	private boolean ValidateRegInput() {
 		if (!RegexUtils.checkUserName(editUserName.getText().toString())) {
 			final AlertDialog username_error_dialog = CustomDialog.create(
 					ScreenLogin.this, R.drawable.exit_48, null,
@@ -1270,24 +1416,62 @@ public class ScreenLogin extends ActivityGroup implements OnClickListener {
 
 		return true;
 	}
+	
+	
+	
+	private boolean ValidateLoginInput() {
+		if (!RegexUtils.checkUserName(editUserName.getText().toString())) {
+			final AlertDialog username_error_dialog = CustomDialog.create(
+					ScreenLogin.this, R.drawable.exit_48, null,
+					" The username is 4-16 any combination of characters ",
+					"OK", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+						}
+					}, null, null);
+			username_error_dialog.show();
+			ResetInput();
+			return false;
+		}
+		if (!RegexUtils.checkPassWord(editPassword.getText().toString())) {
+			final AlertDialog password_error_dialog = CustomDialog.create(
+					ScreenLogin.this, R.drawable.exit_48, null,
+					" The password is 6-16 any combination of characters ",
+					"OK", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+						}
+					}, null, null);
+			password_error_dialog.show();
+			editPassword.setText("");
+			return false;
+		}
+
+		return true;
+	}
 
 	@Override
 	public void onClick(View arg0) {
 		// TODO Auto-generated method stub
 		if (arg0.getId() == R.id.btnsubmit) {
-			// SipAdminUtils sipAdmin = new SipAdminUtils(this);
-			// boolean flag =
-			// sipAdmin.Sip_Add_User(SipAdminUtils.getDeviceNo());
-			// System.out.println("======================flag:"+flag);
-			// sipAdmin.Sip_Admin_Login();
-
-			// Intent intent = new Intent();
-			// intent.setClass(getApplicationContext(), ScreenMainAV.class);
-			// startActivity(intent);
-			if (ValidateInput()) {
-				Message message = mHandler.obtainMessage(Admin_Login_Action);
-				message.sendToTarget();
-			}
+			
+			if (!mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_REG,
+					NgnConfigurationEntry.DEFAULT_DEVICE_REG)) {
+				if (ValidateRegInput()) {
+					Message message = mHandler.obtainMessage(Admin_Login_Action);
+					message.sendToTarget();
+				}
+			} else if(mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_REG,
+					NgnConfigurationEntry.DEFAULT_DEVICE_REG) && !mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_LOGIN,
+					NgnConfigurationEntry.DEFAULT_DEVICE_LOGIN))
+	    	{
+				if (ValidateLoginInput()) {
+					Message message = mHandler.obtainMessage(User_Login_Action);
+					message.sendToTarget();
+				}
+	    	}
+			
+			
 		}
 	}
 
