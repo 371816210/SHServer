@@ -19,6 +19,7 @@
  */
 package com.inhuasoft.shserver.Screens;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -37,6 +38,8 @@ import com.inhuasoft.shserver.Engine;
 import com.inhuasoft.shserver.IMSDroid;
 import com.inhuasoft.shserver.Main;
 import com.inhuasoft.shserver.R;
+import com.inhuasoft.shserver.Screens.BaseScreen.SCREEN_TYPE;
+import com.inhuasoft.shserver.Services.IScreenService;
 import com.inhuasoft.shserver.Utils.MD5;
 import com.inhuasoft.shserver.Utils.RegexUtils;
 import com.inhuasoft.shserver.Utils.SipAdminUtils;
@@ -59,12 +62,17 @@ import org.doubango.ngn.events.NgnRegistrationEventArgs;
 import org.doubango.ngn.media.NgnMediaType;
 import org.doubango.ngn.services.INgnConfigurationService;
 import org.doubango.ngn.services.INgnSipService;
+import org.doubango.ngn.sip.NgnAVSession;
 import org.doubango.ngn.sip.NgnSipSession.ConnectionState;
 import org.doubango.ngn.utils.NgnConfigurationEntry;
+import org.doubango.ngn.utils.NgnPredicate;
+import org.doubango.ngn.utils.NgnStringUtils;
 import org.doubango.tinyWRAP.MsrpCallback;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import android.R.integer;
 import android.app.Activity;
@@ -74,11 +82,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.util.Xml;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -97,8 +108,15 @@ import android.widget.AdapterView.OnItemClickListener;
 public class ScreenLogin extends Activity implements OnClickListener {
 	private static String TAG = ScreenLogin.class.getCanonicalName();
 
+	private final Engine mEngine;
+	private final IScreenService mScreenService;
+	private final INgnConfigurationService mConfigurationService;
+
 	Button btnSubmit;
 	EditText editUserName, editPassword, editRePassword;
+	private boolean SysIsReg = false;
+	private boolean SysIsLogin = false;
+	private Handler mMainHandler;
 
 	private static final int Admin_Login_Action = 0X01;
 	private static final int Admin_Login_Fail = 0X02;
@@ -118,6 +136,19 @@ public class ScreenLogin extends Activity implements OnClickListener {
 	private static final int Bind_User_Device_Action = 0X016;
 	private static final int Bind_User_Device_Success = 0X017;
 	private static final int Bind_User_Device_Fail = 0X018;
+	private static final int GetUserByDevice_Action = 0x19;
+	private static final int GetUserByDevice_Success = 0x20;
+	private static final int GetUserByDevice_Fail = 0x21;
+
+	public ScreenLogin() {
+		super();
+		// Sets main activity (should be done before starting services)
+		mEngine = (Engine) Engine.getInstance();
+		mEngine.setMainActivity(this);
+		mScreenService = ((Engine) Engine.getInstance()).getScreenService();
+		mConfigurationService = ((Engine) Engine.getInstance())
+				.getConfigurationService();
+	}
 
 	private Handler mHandler = new Handler() {
 		@Override
@@ -156,36 +187,36 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				break;
 			case Sip_Add_User_Fail:
 				int sip_add_user_errorcode = msg.arg1;
-				if(sip_add_user_errorcode == 106)
-				{
-				   final AlertDialog sip_add_user_dialog = CustomDialog.create(
-							ScreenLogin.this, R.drawable.exit_48, null,
-							" The user name has been registered! the return code is  "
-									+ sip_add_user_errorcode, "OK",
-							new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-								    ResetInput() ;
+				if (sip_add_user_errorcode == 106) {
+					final AlertDialog sip_add_user_dialog = CustomDialog
+							.create(ScreenLogin.this, R.drawable.exit_48, null,
+									" The user name has been registered! the return code is  "
+											+ sip_add_user_errorcode, "OK",
+									new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(
+												DialogInterface dialog,
+												int which) {
+											ResetInput();
 
-								}
-							}, null, null);
+										}
+									}, null, null);
 					sip_add_user_dialog.show();
-				}else 
-				{
-				  final AlertDialog sip_add_user_dialog = CustomDialog.create(
-						ScreenLogin.this, R.drawable.exit_48, null,
-						" A error has occurred, the error code is  "
-								+ sip_add_user_errorcode, "exit",
-						new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog,
-									int which) {
-								ScreenLogin.this.finish();
+				} else {
+					final AlertDialog sip_add_user_dialog = CustomDialog
+							.create(ScreenLogin.this, R.drawable.exit_48, null,
+									" A error has occurred, the error code is  "
+											+ sip_add_user_errorcode, "exit",
+									new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(
+												DialogInterface dialog,
+												int which) {
+											ScreenLogin.this.finish();
 
-							}
-						}, null, null);
-				sip_add_user_dialog.show();
+										}
+									}, null, null);
+					sip_add_user_dialog.show();
 				}
 				break;
 			case Sip_Add_User_Success:
@@ -199,40 +230,39 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				break;
 			case Sip_Add_Device_Fail:
 				int sip_add_device_errorcode = msg.arg1;
-				if(sip_add_device_errorcode == 206)
-				{
-					final AlertDialog sip_add_device_dialog = CustomDialog.create(
-							ScreenLogin.this, R.drawable.exit_48, null,
-							" The device has been registered! the return code is   "
-									+ sip_add_device_errorcode, "OK",
-							new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									//ScreenLogin.this.finish();
-									//enter login window 
+				if (sip_add_device_errorcode == 206) {
+					final AlertDialog sip_add_device_dialog = CustomDialog
+							.create(ScreenLogin.this, R.drawable.exit_48, null,
+									" The device has been registered! the return code is   "
+											+ sip_add_device_errorcode, "OK",
+									new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(
+												DialogInterface dialog,
+												int which) {
+											// ScreenLogin.this.finish();
+											// enter login window
 
-								}
-							}, null, null);
+										}
+									}, null, null);
+					sip_add_device_dialog.show();
+				} else {
+					final AlertDialog sip_add_device_dialog = CustomDialog
+							.create(ScreenLogin.this, R.drawable.exit_48, null,
+									" A error has occurred, the error code is  "
+											+ sip_add_device_errorcode, "exit",
+									new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(
+												DialogInterface dialog,
+												int which) {
+											ScreenLogin.this.finish();
+
+										}
+									}, null, null);
 					sip_add_device_dialog.show();
 				}
-				else 
-				{
-					final AlertDialog sip_add_device_dialog = CustomDialog.create(
-							ScreenLogin.this, R.drawable.exit_48, null,
-							" A error has occurred, the error code is  "
-									+ sip_add_device_errorcode, "exit",
-							new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									ScreenLogin.this.finish();
 
-								}
-							}, null, null);
-					sip_add_device_dialog.show();
-				}
-				
 				break;
 			case Sip_Add_Device_Success:
 				Message user_reg_message = mHandler
@@ -250,8 +280,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				break;
 			case Device_Reg_Fail:
 				int device_reg_errorcode = msg.arg1;
-				if(device_reg_errorcode == 505 )
-				{
+				if (device_reg_errorcode == 505) {
 					final AlertDialog device_reg_dialog = CustomDialog.create(
 							ScreenLogin.this, R.drawable.exit_48, null,
 							" The device has been registered! the return code is   "
@@ -260,28 +289,26 @@ public class ScreenLogin extends Activity implements OnClickListener {
 								@Override
 								public void onClick(DialogInterface dialog,
 										int which) {
-									//ScreenLogin.this.finish();
-									//enter login window
+									// ScreenLogin.this.finish();
+									// enter login window
 
 								}
 							}, null, null);
 					device_reg_dialog.show();
-				}
-				else
-				{
-				final AlertDialog device_reg_dialog = CustomDialog.create(
-						ScreenLogin.this, R.drawable.exit_48, null,
-						" A error has occurred, the error code is  "
-								+ device_reg_errorcode, "exit",
-						new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog,
-									int which) {
-								ScreenLogin.this.finish();
+				} else {
+					final AlertDialog device_reg_dialog = CustomDialog.create(
+							ScreenLogin.this, R.drawable.exit_48, null,
+							" A error has occurred, the error code is  "
+									+ device_reg_errorcode, "exit",
+							new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog,
+										int which) {
+									ScreenLogin.this.finish();
 
-							}
-						}, null, null);
-				device_reg_dialog.show();
+								}
+							}, null, null);
+					device_reg_dialog.show();
 				}
 				break;
 			case User_Reg_Action:
@@ -304,7 +331,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 								@Override
 								public void onClick(DialogInterface dialog,
 										int which) {
-									  ResetInput();
+									ResetInput();
 
 								}
 							}, null, null);
@@ -330,6 +357,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				thread_bind_user_device.start();
 				break;
 			case Bind_User_Device_Success:
+
 				break;
 			case Bind_User_Device_Fail:
 				int bind_user_device_errorcode = msg.arg1;
@@ -347,9 +375,19 @@ public class ScreenLogin extends Activity implements OnClickListener {
 								}, null, null);
 				bind_user_device_dialog.show();
 				break;
-			 default:  
-		            super.handleMessage(msg);//这里最好对不需要或者不关心的消息抛给父类，避免丢失消息  
-		            break; 
+			case GetUserByDevice_Action:
+				GetUserByDeviceThread thread_get_user_by_device = new GetUserByDeviceThread();
+				thread_get_user_by_device.start();
+				break;
+			case GetUserByDevice_Fail:
+
+				break;
+			case GetUserByDevice_Success:
+
+				break;
+			default:
+				super.handleMessage(msg);// 这里最好对不需要或者不关心的消息抛给父类，避免丢失消息
+				break;
 
 			}
 		}
@@ -371,10 +409,47 @@ public class ScreenLogin extends Activity implements OnClickListener {
 		}
 		return null;
 	}
-	
-	
-	
-	
+
+	public static String ParserXml(String xml, String nodeName) {
+		String returnStr = null;
+		ByteArrayInputStream tInputStringStream = null;
+		try {
+			if (xml != null && !xml.trim().equals("")) {
+				tInputStringStream = new ByteArrayInputStream(xml.getBytes());
+			}
+		} catch (Exception e) {
+			return null;
+		}
+		XmlPullParser parser = Xml.newPullParser();
+		try {
+			parser.setInput(tInputStringStream, "UTF-8");
+			int eventType = parser.getEventType();
+			while (eventType != XmlPullParser.END_DOCUMENT) {
+				switch (eventType) {
+				case XmlPullParser.START_TAG:// 开始元素事件
+					String name = parser.getName();
+					if (name.equalsIgnoreCase(nodeName)) {
+						returnStr = parser.nextText();
+					}
+					break;
+				}
+				eventType = parser.next();
+			}
+			tInputStringStream.close();
+			// return persons;
+		} catch (XmlPullParserException e) {
+
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+		return returnStr;
+	}
+
 	class SipAdminLoginThread extends Thread {
 
 		public void run() {
@@ -398,9 +473,9 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					System.out.println("response:" + strmd5);
 					if (strmd5.equals(login_ok)) {
 						System.out.println("sip admin web login success");
-						Message message = mHandler.obtainMessage(
-								Admin_Login_Success);
-						message.arg1 = 300 ;
+						Message message = mHandler
+								.obtainMessage(Admin_Login_Success);
+						message.arg1 = 300;
 						message.sendToTarget();
 						CookieStore cookies = ((AbstractHttpClient) httpClient)
 								.getCookieStore();
@@ -413,8 +488,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 						// " login success ", Toast.LENGTH_SHORT).show();
 					} else {
 						System.out.println("sip admin web login fail ");
-						Message message = mHandler.obtainMessage(
-								Admin_Login_Fail);
+						Message message = mHandler
+								.obtainMessage(Admin_Login_Fail);
 						message.arg1 = 301;
 						message.sendToTarget();
 						// sip_admin_login_flag = false;
@@ -430,13 +505,13 @@ public class ScreenLogin extends Activity implements OnClickListener {
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
 				Message message = mHandler.obtainMessage(Admin_Login_Fail);
-				message.arg1 = 303 ;
+				message.arg1 = 303;
 				message.sendToTarget();
 				e.printStackTrace();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				Message message = mHandler.obtainMessage(Admin_Login_Fail);
-				message.arg1 = 304 ;
+				message.arg1 = 304;
 				message.sendToTarget();
 				e.printStackTrace();
 			} catch (NoSuchAlgorithmException e) {
@@ -448,8 +523,6 @@ public class ScreenLogin extends Activity implements OnClickListener {
 			}
 		}
 	}
-	
-	
 
 	class SipAddUserThread extends Thread {
 
@@ -486,26 +559,24 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					String strmd5 = MD5.getMD5(str);
 					if (str.contains("is already a valid user")) {
 						// sip_add_user = true;
-						Message message = mHandler.obtainMessage(
-								Sip_Add_User_Fail);
+						Message message = mHandler
+								.obtainMessage(Sip_Add_User_Fail);
 						message.arg1 = 106;
 						message.sendToTarget();
 						System.out
 								.println("=================is already a valid user");
-					}
-					else if (str.contains("New User added!")) {
-						Message message = mHandler.obtainMessage(
-								Sip_Add_User_Success);
-						message.arg1 = 101 ;
+					} else if (str.contains("New User added!")) {
+						Message message = mHandler
+								.obtainMessage(Sip_Add_User_Success);
+						message.arg1 = 101;
 						message.sendToTarget();
 						System.out.println("New User added!");
 						// sip_add_user = true;
-					}
-					else {
+					} else {
 						System.out.println("add user fail ");
 						// sip_add_user = false;
-						Message message = mHandler.obtainMessage(
-								Sip_Add_User_Fail);
+						Message message = mHandler
+								.obtainMessage(Sip_Add_User_Fail);
 						message.arg1 = 105;
 						message.sendToTarget();
 					}
@@ -513,9 +584,8 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				} else {
 					System.out.println("add user fail ");
 					// sip_add_user = false;
-					Message message = mHandler.obtainMessage(
-							Sip_Add_User_Fail);
-					message.arg1 = 102 ;
+					Message message = mHandler.obtainMessage(Sip_Add_User_Fail);
+					message.arg1 = 102;
 					message.sendToTarget();
 				}
 			} catch (ClientProtocolException e) {
@@ -534,7 +604,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				Message message = mHandler.obtainMessage(Sip_Add_User_Fail);
-				message.arg1 = 104; 
+				message.arg1 = 104;
 				message.sendToTarget();
 			}
 		}
@@ -571,38 +641,39 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					String strmd5 = MD5.getMD5(str);
 					if (str.contains("is already a valid user")) {
 						// sip_add_user = true;
-						Message message = mHandler.obtainMessage(
-								Sip_Add_Device_Fail);
+						Message message = mHandler
+								.obtainMessage(Sip_Add_Device_Fail);
 						message.arg1 = 206;
 						message.sendToTarget();
 						System.out
 								.println("=================is already a valid user");
-						return ;
+						return;
 					} else if (str.contains("New User added!")) {
-						Message message = mHandler.obtainMessage(
-								Sip_Add_Device_Success);
-						message.arg1 = 201 ;
+						Message message = mHandler
+								.obtainMessage(Sip_Add_Device_Success);
+						message.arg1 = 201;
 						message.sendToTarget();
 						System.out.println("New User added!");
-						return ;
+						return;
 						// sip_add_user = true;
-					}
-					else {
+					} else {
 						System.out.println("add user fail ");
 						// sip_add_user = false;
-						Message message = mHandler.obtainMessage(Sip_Add_Device_Fail);
-						message.arg1 = 207 ;
+						Message message = mHandler
+								.obtainMessage(Sip_Add_Device_Fail);
+						message.arg1 = 207;
 						message.sendToTarget();
-						return ;
+						return;
 					}
 					// System.out.println(" login in add user");
 				} else {
 					System.out.println("add user fail ");
 					// sip_add_user = false;
-					Message message = mHandler.obtainMessage(Sip_Add_Device_Fail);
+					Message message = mHandler
+							.obtainMessage(Sip_Add_Device_Fail);
 					message.arg1 = 202;
 					message.sendToTarget();
-					return ;
+					return;
 				}
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
@@ -610,27 +681,25 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail);
 				message.arg1 = 203;
 				message.sendToTarget();
-				return ;
+				return;
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail);
 				message.arg1 = 204;
 				message.sendToTarget();
-				return ;
+				return;
 			} catch (NoSuchAlgorithmException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				Message message = mHandler.obtainMessage(Sip_Add_Device_Fail);
 				message.arg1 = 205;
 				message.sendToTarget();
-				return ;
+				return;
 			}
 		}
 	}
 
-	
-	
 	class UserRegThread extends Thread {
 
 		public void run() {
@@ -641,7 +710,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 			} catch (MalformedURLException e1) {
 				// TODO Auto-generated catch block
 				Message message = mHandler.obtainMessage(User_Reg_Fail);
-				message.arg1 = 601 ;
+				message.arg1 = 601;
 				message.sendToTarget();
 				e1.printStackTrace();
 			}
@@ -682,27 +751,23 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				Document dom = builder.parse(input);
 				String returncode = getValByTagName(dom, "UserRegistResult");// 返回码
 				if ("-2".equals(returncode)) {
-					Message message = mHandler
-							.obtainMessage(User_Reg_Fail);
-					message.arg1 = 602 ;
+					Message message = mHandler.obtainMessage(User_Reg_Fail);
+					message.arg1 = 602;
 					message.sendToTarget();
 				} else if ("0".equals(returncode)) {
-					Message message = mHandler
-							.obtainMessage(User_Reg_Fail);
+					Message message = mHandler.obtainMessage(User_Reg_Fail);
 					message.arg1 = 603;
 					message.sendToTarget();
 				} else if ("1".equals(returncode)) {
 					Message message = mHandler.obtainMessage(User_Reg_Success);
-					message.arg1 = 600 ;
+					message.arg1 = 600;
 					message.sendToTarget();
 				} else if ("2".equals(returncode)) {
-					Message message = mHandler
-							.obtainMessage(User_Reg_Fail);
+					Message message = mHandler.obtainMessage(User_Reg_Fail);
 					message.arg1 = 605;
 					message.sendToTarget();
 				} else {
-					Message message = mHandler
-							.obtainMessage(User_Reg_Fail);
+					Message message = mHandler.obtainMessage(User_Reg_Fail);
 					message.arg1 = 604;
 					message.sendToTarget();
 				}
@@ -713,7 +778,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 			} catch (Exception ex) {
 				Log.d(TAG, "-->getResponseString:catch" + ex.getMessage());
 				Message message = mHandler.obtainMessage(User_Reg_Fail);
-				message.arg1 = 606 ; 
+				message.arg1 = 606;
 				message.sendToTarget();
 			} finally {
 				try {
@@ -722,8 +787,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					httpConnection.disconnect();
 				} catch (Exception e) {
 					Log.d(TAG, "-->getResponseString:finally" + e.getMessage());
-					Message message = mHandler
-							.obtainMessage(User_Reg_Fail);
+					Message message = mHandler.obtainMessage(User_Reg_Fail);
 					message.arg1 = 607;
 					message.sendToTarget();
 				}
@@ -731,8 +795,6 @@ public class ScreenLogin extends Activity implements OnClickListener {
 
 		}
 	}
-	
-	
 
 	class DeviceRegThread extends Thread {
 
@@ -744,7 +806,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 			} catch (MalformedURLException e1) {
 				// TODO Auto-generated catch block
 				Message message = mHandler.obtainMessage(Device_Reg_Fail);
-				message.arg1 = 501 ;
+				message.arg1 = 501;
 				message.sendToTarget();
 				e1.printStackTrace();
 			}
@@ -788,32 +850,31 @@ public class ScreenLogin extends Activity implements OnClickListener {
 
 				if ("-2".equals(returncode)) {
 					Message message = mHandler.obtainMessage(Device_Reg_Fail);
-					message.arg1 = 502 ;
+					message.arg1 = 502;
 					message.sendToTarget();
 				} else if ("0".equals(returncode)) {
 					Message message = mHandler.obtainMessage(Device_Reg_Fail);
 					message.arg1 = 503;
 					message.sendToTarget();
 				} else if ("1".equals(returncode)) {
-					Message message = mHandler.obtainMessage(
-							Device_Reg_Success);
-					message.arg1 = 500 ;
+					Message message = mHandler
+							.obtainMessage(Device_Reg_Success);
+					message.arg1 = 500;
 					message.sendToTarget();
 				} else if ("2".equals(returncode)) {
-					Message message = mHandler.obtainMessage(
-							Device_Reg_Fail);
-					message.arg1 = 505 ;
+					Message message = mHandler.obtainMessage(Device_Reg_Fail);
+					message.arg1 = 505;
 					message.sendToTarget();
 				} else {
 					Message message = mHandler.obtainMessage(Device_Reg_Fail);
-					message.arg1 = 504 ; 
+					message.arg1 = 504;
 					message.sendToTarget();
 				}
 
 			} catch (Exception ex) {
 				Log.d(TAG, "-->getResponseString:catch" + ex.getMessage());
 				Message message = mHandler.obtainMessage(Device_Reg_Fail);
-				message.arg1 = 506 ;
+				message.arg1 = 506;
 				message.sendToTarget();
 			} finally {
 				try {
@@ -823,15 +884,13 @@ public class ScreenLogin extends Activity implements OnClickListener {
 				} catch (Exception e) {
 					Log.d(TAG, "-->getResponseString:finally" + e.getMessage());
 					Message message = mHandler.obtainMessage(Device_Reg_Fail);
-					message.arg1 = 507 ; 
+					message.arg1 = 507;
 					message.sendToTarget();
 				}
 			}
 
 		}
 	}
-
-
 
 	class BindUserDeviceThread extends Thread {
 
@@ -843,7 +902,7 @@ public class ScreenLogin extends Activity implements OnClickListener {
 			} catch (MalformedURLException e1) {
 				// TODO Auto-generated catch block
 				Message message = mHandler.obtainMessage(Bind_User_Device_Fail);
-				message.arg1 = 401 ; 
+				message.arg1 = 401;
 				message.sendToTarget();
 				e1.printStackTrace();
 			}
@@ -884,37 +943,36 @@ public class ScreenLogin extends Activity implements OnClickListener {
 						.println("======BindUserDeviceThread======== return code is  "
 								+ returncode);
 				if ("-2".equals(returncode)) {
-					Message message = mHandler.obtainMessage(
-							Bind_User_Device_Fail);
-					message.arg1 = 402 ; 
+					Message message = mHandler
+							.obtainMessage(Bind_User_Device_Fail);
+					message.arg1 = 402;
 					message.sendToTarget();
 				} else if ("0".equals(returncode)) {
-					Message message = mHandler.obtainMessage(
-							Bind_User_Device_Fail);
-					message.arg1 = 403 ; 
+					Message message = mHandler
+							.obtainMessage(Bind_User_Device_Fail);
+					message.arg1 = 403;
 					message.sendToTarget();
 				} else if ("1".equals(returncode)) {
-					Message message = mHandler.obtainMessage(
-							Bind_User_Device_Success);
-					message.arg1 = 400 ;
+					Message message = mHandler
+							.obtainMessage(Bind_User_Device_Success);
+					message.arg1 = 400;
 					message.sendToTarget();
 				} else if ("2".equals(returncode)) {
-					Message message = mHandler.obtainMessage(
-							Bind_User_Device_Fail, 405);
-					message.arg1 = 405 ; 
+					Message message = mHandler
+							.obtainMessage(Bind_User_Device_Fail);
+					message.arg1 = 405;
 					message.sendToTarget();
 				} else {
-					Message message = mHandler.obtainMessage(
-							Bind_User_Device_Fail, 404);
-					message.arg1 = 404 ;
+					Message message = mHandler
+							.obtainMessage(Bind_User_Device_Fail);
+					message.arg1 = 404;
 					message.sendToTarget();
 				}
 
 			} catch (Exception ex) {
 				Log.d(TAG, "-->getResponseString:catch" + ex.getMessage());
-				Message message = mHandler.obtainMessage(
-						Bind_User_Device_Success, 406);
-				message.arg1 = 406 ; 
+				Message message = mHandler.obtainMessage(Bind_User_Device_Fail);
+				message.arg1 = 406;
 				message.sendToTarget();
 			} finally {
 				try {
@@ -923,9 +981,105 @@ public class ScreenLogin extends Activity implements OnClickListener {
 					httpConnection.disconnect();
 				} catch (Exception e) {
 					Log.d(TAG, "-->getResponseString:finally" + e.getMessage());
-					Message message = mHandler.obtainMessage(
-							Bind_User_Device_Success);
+					Message message = mHandler
+							.obtainMessage(Bind_User_Device_Fail);
 					message.arg1 = 407;
+					message.sendToTarget();
+				}
+			}
+
+		}
+	}
+
+	class GetUserByDeviceThread extends Thread {
+
+		public void run() {
+			String RequestUrl = "http://ota.inhuasoft.cn/SHS_WS/ShsService.asmx?op=GetUserByDevice";
+			URL url = null;
+			try {
+				url = new URL(RequestUrl);
+			} catch (MalformedURLException e1) {
+				// TODO Auto-generated catch block
+				Message message = mHandler.obtainMessage(GetUserByDevice_Fail);
+				message.arg1 = 701;
+				message.sendToTarget();
+				e1.printStackTrace();
+			}
+			String envelope = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+					+ "<soap12:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap12=\"http://www.w3.org/2003/05/soap-envelope\">"
+					+ "<soap12:Header>"
+					+ "<MySoapHeader xmlns=\"http://tempuri.org/\">"
+					+ "<UserName>SysAdmin</UserName>"
+					+ "<PassWord>SysAdminSysAdmin</PassWord>"
+					+ "</MySoapHeader>" + "</soap12:Header>" + "<soap12:Body>"
+					+ "<GetUserByDevice xmlns=\"http://tempuri.org/\">"
+					+ "<DeviceNo>" + getDeviceNo() + "</DeviceNo>"
+					+ "</GetUserByDevice>" + "</soap12:Body>"
+					+ "</soap12:Envelope>";
+			HttpURLConnection httpConnection = null;
+			OutputStream output = null;
+			InputStream input = null;
+			try {
+				httpConnection = (HttpURLConnection) url.openConnection();
+				httpConnection.setRequestMethod("POST");
+				httpConnection.setRequestProperty("Content-Length",
+						String.valueOf(envelope.length()));
+				httpConnection.setRequestProperty("Content-Type",
+						"text/xml; charset=utf-8");
+				httpConnection.setDoOutput(true);
+				httpConnection.setDoInput(true);
+				output = httpConnection.getOutputStream();
+				output.write(envelope.getBytes());
+				output.flush();
+				input = httpConnection.getInputStream();
+				DocumentBuilderFactory factory = DocumentBuilderFactory
+						.newInstance();
+				DocumentBuilder builder = factory.newDocumentBuilder();
+				Document dom = builder.parse(input);
+				String returncode = getValByTagName(dom,
+						"GetUserByDeviceResult");// 返回码
+				System.out
+						.println("======GetUserByDeviceResult======== return code is  "
+								+ returncode);
+				if ("-2".equals(returncode)) {
+					Message message = mHandler
+							.obtainMessage(GetUserByDevice_Fail);
+					message.arg1 = 702;
+					message.sendToTarget();
+				} else {
+					String username = ParserXml(returncode, "UserName");// 返回码
+					if (username != null) {
+						mConfigurationService.putBoolean(
+								NgnConfigurationEntry.DEVICE_REG, true);
+						Message message = mHandler
+								.obtainMessage(GetUserByDevice_Success);
+						message.arg1 = 703;
+						message.sendToTarget();
+					}
+					else {
+						Message message = mHandler
+								.obtainMessage(GetUserByDevice_Success);
+						message.arg1 = 704;
+						message.sendToTarget();
+					}
+
+				}
+
+			} catch (Exception ex) {
+				Log.d(TAG, "-->getResponseString:catch" + ex.getMessage());
+				Message message = mHandler.obtainMessage(GetUserByDevice_Fail);
+				message.arg1 = 706;
+				message.sendToTarget();
+			} finally {
+				try {
+					output.close();
+					input.close();
+					httpConnection.disconnect();
+				} catch (Exception e) {
+					Log.d(TAG, "-->getResponseString:finally" + e.getMessage());
+					Message message = mHandler
+							.obtainMessage(GetUserByDevice_Fail);
+					message.arg1 = 707;
 					message.sendToTarget();
 				}
 			}
@@ -935,35 +1089,38 @@ public class ScreenLogin extends Activity implements OnClickListener {
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		if (!Engine.getInstance().isStarted()) {
+			final Thread thread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					if (!mEngine.isStarted()) {
+						Log.d(TAG, "Starts the engine ");
+						mEngine.start();
+					}
+				}
+			});
+
+			thread.setPriority(Thread.MAX_PRIORITY);
+			thread.start();
+		}
+		if (!mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_REG,
+				NgnConfigurationEntry.DEFAULT_DEVICE_REG)) {
+			Message message = mHandler.obtainMessage(GetUserByDevice_Action);
+			message.sendToTarget();
+		}
+
 		setContentView(R.layout.screen_box_login);
+		setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
+
 		btnSubmit = (Button) findViewById(R.id.btnsubmit);
 		btnSubmit.setOnClickListener(this);
-
 		editUserName = (EditText) findViewById(R.id.edit_username);
 		editPassword = (EditText) findViewById(R.id.edit_password);
 		editRePassword = (EditText) findViewById(R.id.edit_checkpassword);
 
-		/*
-		 * mSipBroadCastRecv = new BroadcastReceiver() {
-		 * 
-		 * @Override public void onReceive(Context context, Intent intent) {
-		 * final String action = intent.getAction();
-		 * 
-		 * // Registration Event
-		 * if(NgnRegistrationEventArgs.ACTION_REGISTRATION_EVENT
-		 * .equals(action)){ NgnRegistrationEventArgs args =
-		 * intent.getParcelableExtra(NgnEventArgs.EXTRA_EMBEDDED); if(args ==
-		 * null){ Log.e(TAG, "Invalid event args"); return; }
-		 * switch(args.getEventType()){ case REGISTRATION_NOK: case
-		 * UNREGISTRATION_OK: case REGISTRATION_OK: case
-		 * REGISTRATION_INPROGRESS: case UNREGISTRATION_INPROGRESS: case
-		 * UNREGISTRATION_NOK: default:
-		 * //((ScreenHomeAdapter)mGridView.getAdapter()).refresh(); break; } } }
-		 * }; final IntentFilter intentFilter = new IntentFilter();
-		 * intentFilter.
-		 * addAction(NgnRegistrationEventArgs.ACTION_REGISTRATION_EVENT);
-		 * registerReceiver(mSipBroadCastRecv, intentFilter);
-		 */
+		mMainHandler = new Handler();
+
 	}
 
 	@Override
@@ -980,62 +1137,54 @@ public class ScreenLogin extends Activity implements OnClickListener {
 		editPassword.setText("");
 		editRePassword.setText("");
 	}
-	
-	private boolean ValidateInput(){
-		 if(!RegexUtils.checkUserName(editUserName.getText().toString()))
-		  {
-			 final AlertDialog username_error_dialog = CustomDialog
-						.create(ScreenLogin.this, R.drawable.exit_48, null,
-								" The username is 4-16 any combination of characters "
-								 , "OK",
-								new DialogInterface.OnClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog,
-											int which) {
-									}
-								}, null, null);
-			 username_error_dialog.show();
-			 ResetInput();
-		        return false;	   
-		  }
-		 if(!RegexUtils.checkPassWord(editPassword.getText().toString()))
-		  {
-			 final AlertDialog password_error_dialog = CustomDialog
-						.create(ScreenLogin.this, R.drawable.exit_48, null,
-								" The password is 6-16 any combination of characters "
-								 , "OK",
-								new DialogInterface.OnClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog,
-											int which) {
-									}
-								}, null, null);
-			 password_error_dialog.show();
-			 editPassword.setText("");
-			 editRePassword.setText("");
-		        return false;	   
-		  }
-		 if(!editPassword.getText().toString().equals(editRePassword.getText().toString()))
-		 {
-			 final AlertDialog repassword_error_dialog = CustomDialog
-						.create(ScreenLogin.this, R.drawable.exit_48, null,
-								" The password and confirm password must be the same"
-								 , "OK",
-								new DialogInterface.OnClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog,
-											int which) {
-									}
-								}, null, null);
-			 repassword_error_dialog.show();
-			 editPassword.setText("");
-			 editRePassword.setText("");
-			 return false;
-		 }
-		 
-		 return true;
+
+	private boolean ValidateInput() {
+		if (!RegexUtils.checkUserName(editUserName.getText().toString())) {
+			final AlertDialog username_error_dialog = CustomDialog.create(
+					ScreenLogin.this, R.drawable.exit_48, null,
+					" The username is 4-16 any combination of characters ",
+					"OK", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+						}
+					}, null, null);
+			username_error_dialog.show();
+			ResetInput();
+			return false;
+		}
+		if (!RegexUtils.checkPassWord(editPassword.getText().toString())) {
+			final AlertDialog password_error_dialog = CustomDialog.create(
+					ScreenLogin.this, R.drawable.exit_48, null,
+					" The password is 6-16 any combination of characters ",
+					"OK", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+						}
+					}, null, null);
+			password_error_dialog.show();
+			editPassword.setText("");
+			editRePassword.setText("");
+			return false;
+		}
+		if (!editPassword.getText().toString()
+				.equals(editRePassword.getText().toString())) {
+			final AlertDialog repassword_error_dialog = CustomDialog.create(
+					ScreenLogin.this, R.drawable.exit_48, null,
+					" The password and confirm password must be the same",
+					"OK", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+						}
+					}, null, null);
+			repassword_error_dialog.show();
+			editPassword.setText("");
+			editRePassword.setText("");
+			return false;
+		}
+
+		return true;
 	}
-	
+
 	@Override
 	public void onClick(View arg0) {
 		// TODO Auto-generated method stub
@@ -1049,37 +1198,74 @@ public class ScreenLogin extends Activity implements OnClickListener {
 			// Intent intent = new Intent();
 			// intent.setClass(getApplicationContext(), ScreenMainAV.class);
 			// startActivity(intent);
-            if(ValidateInput())
-            {
-			  Message message = mHandler.obtainMessage(Admin_Login_Action);
-			  message.sendToTarget();
-            }
+			if (ValidateInput()) {
+				Message message = mHandler.obtainMessage(Admin_Login_Action);
+				message.sendToTarget();
+			}
 		}
 	}
 
-	// @Override
-	// public boolean hasMenu() {
-	// return true;
-	// }
-	//
-	// @Override
-	// public boolean createOptionsMenu(Menu menu) {
-	// menu.add(0, ScreenLogin.MENU_SETTINGS, 0, "Settings");
-	// MenuItem itemExit = menu.add(0, ScreenLogin.MENU_EXIT, 0, "Exit");
-	//
-	// return true;
-	// }
-	//
-	// @Override
-	// public boolean onOptionsItemSelected(MenuItem item) {
-	// switch(item.getItemId()){
-	// case ScreenLogin.MENU_EXIT:
-	// ((Main)getEngine().getMainActivity()).exit();
-	// break;
-	// case ScreenLogin.MENU_SETTINGS:
-	// mScreenService.show(ScreenSettings.class);
-	// break;
-	// }
-	// return true;
-	// }
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		if (mScreenService == null) {
+			super.onSaveInstanceState(outState);
+			return;
+		}
+
+		IBaseScreen screen = mScreenService.getCurrentScreen();
+		if (screen != null) {
+			outState.putInt("action", Main.ACTION_RESTORE_LAST_STATE);
+			outState.putString("screen-id", screen.getId());
+			outState.putString("screen-type", screen.getType().toString());
+		}
+
+		super.onSaveInstanceState(outState);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		if (mScreenService.getCurrentScreen().hasMenu()) {
+			return mScreenService.getCurrentScreen().createOptionsMenu(menu);
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		if (mScreenService.getCurrentScreen().hasMenu()) {
+			menu.clear();
+			return mScreenService.getCurrentScreen().createOptionsMenu(menu);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		IBaseScreen baseScreen = mScreenService.getCurrentScreen();
+		if (baseScreen instanceof Activity) {
+			return ((Activity) baseScreen).onOptionsItemSelected(item);
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (!BaseScreen.processKeyDown(keyCode, event)) {
+			return super.onKeyDown(keyCode, event);
+		}
+		return true;
+	}
+
+	public void exit() {
+		mMainHandler.post(new Runnable() {
+			public void run() {
+				if (!Engine.getInstance().stop()) {
+					Log.e(TAG, "Failed to stop engine");
+				}
+				finish();
+			}
+		});
+	}
+
 }
