@@ -22,11 +22,10 @@
             android:label="@string/app_name"
             android:launchMode="singleTop" >
 
-            
-           <!--<intent-filter>
+           <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>-->
+            </intent-filter>
             
         </activity>
         <activity android:name="com.inhuasoft.shserver.Screens.ScreenSplash" />
@@ -90,15 +89,15 @@
         <activity android:name="com.inhuasoft.shserver.Screens.ScreenDevices" >
         </activity>
         <activity
-            android:name="com.inhuasoft.shserver.ScreenLogin"
+            android:name="com.inhuasoft.shserver.Screens.ScreenLogin"
             android:label="@string/app_name"
             android:launchMode="singleTop"
             android:screenOrientation="landscape"
             android:theme="@style/BaseActivityStyle" >
-             <intent-filter>
+             <!--<intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-             </intent-filter>
+             </intent-filter> -->
         </activity>
         <activity
             android:name="com.inhuasoft.shserver.Screens.ScreenMainAV"

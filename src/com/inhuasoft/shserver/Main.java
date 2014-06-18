@@ -26,11 +26,15 @@ import com.inhuasoft.shserver.Screens.ScreenAVQueue;
 import com.inhuasoft.shserver.Screens.ScreenChatQueue;
 import com.inhuasoft.shserver.Screens.ScreenFileTransferQueue;
 import com.inhuasoft.shserver.Screens.ScreenHome;
+import com.inhuasoft.shserver.Screens.ScreenLogin;
 import com.inhuasoft.shserver.Screens.ScreenSplash;
 import com.inhuasoft.shserver.Screens.ScreenTabMessages;
 import com.inhuasoft.shserver.Screens.BaseScreen.SCREEN_TYPE;
 import com.inhuasoft.shserver.Services.IScreenService;
+
+import org.doubango.ngn.services.INgnConfigurationService;
 import org.doubango.ngn.sip.NgnAVSession;
+import org.doubango.ngn.utils.NgnConfigurationEntry;
 import org.doubango.ngn.utils.NgnPredicate;
 import org.doubango.ngn.utils.NgnStringUtils;
 
@@ -40,6 +44,7 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -61,6 +66,7 @@ public class Main extends ActivityGroup {
 	private Handler mHanler;
 	private final Engine mEngine;
 	private final IScreenService mScreenService;
+	private final INgnConfigurationService mConfigurationService;
 	
 	public Main(){
 		super();
@@ -69,6 +75,8 @@ public class Main extends ActivityGroup {
 		mEngine = (Engine)Engine.getInstance();
 		mEngine.setMainActivity(this);
     	mScreenService = ((Engine)Engine.getInstance()).getScreenService();
+    	mConfigurationService = ((Engine) Engine.getInstance())
+				.getConfigurationService();
 	}
 	
     /** Called when the activity is first created. */
@@ -81,10 +89,29 @@ public class Main extends ActivityGroup {
         mHanler = new Handler();
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
         
-        if(!Engine.getInstance().isStarted()){
-        	startActivityForResult(new Intent(this, ScreenSplash.class), Main.RC_SPLASH);
-        	return;
-        }
+        if (!Engine.getInstance().isStarted()) {
+			final Thread thread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					if (!mEngine.isStarted()) {
+						Log.d(TAG, "Starts the engine ");
+						mEngine.start();
+					}
+				}
+			});
+
+			thread.setPriority(Thread.MAX_PRIORITY);
+			thread.start();
+		}
+        
+       //没有注册或者没有登陆 
+     if(!mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_REG,
+				NgnConfigurationEntry.DEFAULT_DEVICE_REG) || !mConfigurationService.getBoolean(NgnConfigurationEntry.DEVICE_LOGIN,
+				NgnConfigurationEntry.DEFAULT_DEVICE_LOGIN))
+    	{
+    	    startActivity(new Intent(this, ScreenLogin.class));    
+    	}
+        
         
         Bundle bundle = savedInstanceState;
         if(bundle == null){
