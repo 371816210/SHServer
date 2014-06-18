@@ -112,7 +112,6 @@ import android.widget.AdapterView.OnItemClickListener;
 public class ScreenLogin extends BaseScreen implements OnClickListener {
 	private static String TAG = ScreenLogin.class.getCanonicalName();
 
-	private final Engine mEngine;
 	private final INgnConfigurationService mConfigurationService;
 
 	Button btnSubmit;
@@ -153,8 +152,7 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 	public ScreenLogin() {
 		super(SCREEN_TYPE.SCREENLOGIN, TAG);
 		// Sets main activity (should be done before starting services)
-		mEngine = (Engine) Engine.getInstance();
-		mEngine.setMainActivity(this);
+
 		mConfigurationService = ((Engine) Engine.getInstance())
 				.getConfigurationService();
 	}
@@ -1445,6 +1443,26 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 			
 			
 		}
+	}
+	
+	
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		final Engine engine = getEngine();
+			
+		final Thread thread = new Thread(new Runnable(){
+			@Override
+			public void run() {
+				if(!engine.isStarted()){
+					Log.d(TAG, "Starts the engine from the splash screen");
+					engine.start();
+				}
+			}
+		});
+		thread.setPriority(Thread.MAX_PRIORITY);
+		thread.start();
 	}
 
 }

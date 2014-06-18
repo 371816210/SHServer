@@ -89,7 +89,7 @@ public class Main extends ActivityGroup {
         mHanler = new Handler();
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
         
-        if (!Engine.getInstance().isStarted()) {
+         if (!Engine.getInstance().isStarted()) {
 			final Thread thread = new Thread(new Runnable() {
 				@Override
 				public void run() {
