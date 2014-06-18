@@ -25,7 +25,7 @@ import java.util.Map;
 
 import com.inhuasoft.shserver.Engine;
 import com.inhuasoft.shserver.IMSDroid;
-import com.inhuasoft.shserver.ScreenLogin;
+import com.inhuasoft.shserver.Main;
 import com.inhuasoft.shserver.R;
 import com.inhuasoft.shserver.Screens.IBaseScreen;
 import com.inhuasoft.shserver.Screens.ScreenHome;
@@ -35,7 +35,6 @@ import org.doubango.ngn.services.impl.NgnBaseService;
 import android.app.Activity;
 import android.app.LocalActivityManager;
 import android.content.Intent;
-import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
@@ -97,7 +96,7 @@ public class ScreenService extends NgnBaseService implements IScreenService {
 
 	@Override
 	public boolean bringToFront(int action, String[]... args) {
-		Intent intent = new Intent(IMSDroid.getContext(), ScreenLogin.class);
+		Intent intent = new Intent(IMSDroid.getContext(), Main.class);
 		try{
 			intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP  | Intent.FLAG_ACTIVITY_NEW_TASK);
 			intent.putExtra("action", action);
@@ -118,12 +117,12 @@ public class ScreenService extends NgnBaseService implements IScreenService {
 
 	@Override
 	public boolean bringToFront(String[]... args) {
-		return this.bringToFront(ScreenLogin.ACTION_NONE);
+		return this.bringToFront(Main.ACTION_NONE);
 	}
 
 	@Override
 	public boolean show(Class<? extends Activity> cls, String id) {
-		final ScreenLogin mainActivity = (ScreenLogin)Engine.getInstance().getMainActivity();
+		final Main mainActivity = (Main)Engine.getInstance().getMainActivity();
 		
 		String screen_id = (id == null) ? cls.getCanonicalName() : id;
 		Intent intent = new Intent(mainActivity, cls);
@@ -152,7 +151,7 @@ public class ScreenService extends NgnBaseService implements IScreenService {
 
 	@Override
 	public boolean show(String id) {
-		final  Activity screen = (Activity)((ScreenLogin)Engine.getInstance().getMainActivity()).getLocalActivityManager().getActivity(id);
+		final  Activity screen = (Activity)((Main)Engine.getInstance().getMainActivity()).getLocalActivityManager().getActivity(id);
 		if (screen == null) {
 			Log.e(TAG, String.format(
 					"Failed to retrieve the Screen with id=%s", id));
@@ -174,7 +173,7 @@ public class ScreenService extends NgnBaseService implements IScreenService {
 
 	@Override
 	public boolean destroy(String id) {
-		final LocalActivityManager activityManager = (((ScreenLogin)Engine.getInstance().getMainActivity())).getLocalActivityManager();
+		final LocalActivityManager activityManager = (((Main)Engine.getInstance().getMainActivity())).getLocalActivityManager();
 		if(activityManager != null){
 			activityManager.destroyActivity(id, true);
 			
@@ -223,11 +222,11 @@ public class ScreenService extends NgnBaseService implements IScreenService {
 
 	@Override
 	public IBaseScreen getCurrentScreen() {
-		return (IBaseScreen)((ScreenLogin)Engine.getInstance().getMainActivity()).getLocalActivityManager().getCurrentActivity();
+		return (IBaseScreen)((Main)Engine.getInstance().getMainActivity()).getLocalActivityManager().getCurrentActivity();
 	}
 
 	@Override
 	public IBaseScreen getScreen(String id) {
-		return (IBaseScreen)((ScreenLogin)Engine.getInstance().getMainActivity()).getLocalActivityManager().getActivity(id);
+		return (IBaseScreen)((Main)Engine.getInstance().getMainActivity()).getLocalActivityManager().getActivity(id);
 	}
 }
