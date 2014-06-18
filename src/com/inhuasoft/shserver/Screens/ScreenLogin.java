@@ -113,7 +113,8 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 	private static String TAG = ScreenLogin.class.getCanonicalName();
 
 	private final INgnConfigurationService mConfigurationService;
-
+	private final INgnSipService mSipService;
+	
 	Button btnSubmit;
 	EditText editUserName, editPassword, editRePassword;
 	TextView txtMsginfo;
@@ -155,6 +156,7 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 
 		mConfigurationService = ((Engine) Engine.getInstance())
 				.getConfigurationService();
+		mSipService = getEngine().getSipService();
 	}
 
 	 private void  SetSystemInfo() {
@@ -449,6 +451,7 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 				 if(!mConfigurationService.commit()){
 						Log.e(TAG, "Failed to Commit() configuration");
 					}
+				 mSipService.register(ScreenLogin.this);
 				StartMain();
 				break;
 			case User_Login_Fail:
