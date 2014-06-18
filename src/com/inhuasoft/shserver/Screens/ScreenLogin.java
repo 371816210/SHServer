@@ -179,6 +179,7 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 		 if(mScreenService != null )
 		 {
 		   mScreenService.show(ScreenHome.class);
+		   finish();
 		 }
 	}
 	
@@ -1151,6 +1152,10 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 						mConfigurationService.putBoolean(NgnConfigurationEntry.DEVICE_REG, true);
 						mConfigurationService.putString(NgnConfigurationEntry.USERNAME, editUserName.getText().toString());
 						mConfigurationService.putString(NgnConfigurationEntry.USER_PASSWORD, editPassword.getText().toString());
+						mConfigurationService.putString(NgnConfigurationEntry.IDENTITY_IMPU,"sip:"+getDeviceNo()+"@115.28.9.71");
+						mConfigurationService.putString(NgnConfigurationEntry.IDENTITY_IMPI, getDeviceNo());
+						mConfigurationService.putString(NgnConfigurationEntry.IDENTITY_DISPLAY_NAME, getDeviceNo());
+						mConfigurationService.putString(NgnConfigurationEntry.IDENTITY_PASSWORD, getDeviceNo());
 						if(!mConfigurationService.commit()){
 							Log.e(TAG, "Failed to Commit() configuration");
 						}
