@@ -113,7 +113,6 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 	private static String TAG = ScreenLogin.class.getCanonicalName();
 
 	private final Engine mEngine;
-	private final IScreenService mScreenService;
 	private final INgnConfigurationService mConfigurationService;
 
 	Button btnSubmit;
@@ -156,15 +155,15 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 		// Sets main activity (should be done before starting services)
 		mEngine = (Engine) Engine.getInstance();
 		mEngine.setMainActivity(this);
-		mScreenService = ((Engine) Engine.getInstance()).getScreenService();
 		mConfigurationService = ((Engine) Engine.getInstance())
 				.getConfigurationService();
 	}
 
 	 private void  SetSystemInfo() {
-		 mConfigurationService.putString(NgnConfigurationEntry.DEFAULT_IDENTITY_IMPU,"sip:"+getDeviceNo()+"@115.28.9.71");
-		 mConfigurationService.putString(NgnConfigurationEntry.DEFAULT_IDENTITY_IMPI, getDeviceNo());
-		 mConfigurationService.putString(NgnConfigurationEntry.DEFAULT_IDENTITY_PASSWORD, getDeviceNo());
+		 mConfigurationService.putString(NgnConfigurationEntry.IDENTITY_IMPU,"sip:"+getDeviceNo()+"@115.28.9.71");
+		 mConfigurationService.putString(NgnConfigurationEntry.IDENTITY_IMPI, getDeviceNo());
+		 mConfigurationService.putString(NgnConfigurationEntry.IDENTITY_DISPLAY_NAME, getDeviceNo());
+		 mConfigurationService.putString(NgnConfigurationEntry.IDENTITY_PASSWORD, getDeviceNo());
 		 //注册成功，写入配置信息
 		 mConfigurationService.putBoolean(NgnConfigurationEntry.DEVICE_REG, true);
          //登录成功，写入配置信息
