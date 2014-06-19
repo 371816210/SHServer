@@ -222,7 +222,8 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 							@Override
 							public void onClick(DialogInterface dialog,
 									int which) {
-								ScreenLogin.this.finish();
+								//ScreenLogin.this.finish();
+								ResetInput();
 
 							}
 						}, null, null);
@@ -264,7 +265,8 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 										public void onClick(
 												DialogInterface dialog,
 												int which) {
-											ScreenLogin.this.finish();
+											//ScreenLogin.this.finish();
+											ResetInput();
 
 										}
 									}, null, null);
@@ -292,7 +294,8 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 										public void onClick(
 												DialogInterface dialog,
 												int which) {
-											    ScreenLogin.this.finish();
+											    //ScreenLogin.this.finish();
+											ResetInput();
 
 										}
 									}, null, null);
@@ -307,7 +310,8 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 										public void onClick(
 												DialogInterface dialog,
 												int which) {
-											ScreenLogin.this.finish();
+											//ScreenLogin.this.finish();
+											ResetInput();
 
 										}
 									}, null, null);
@@ -342,6 +346,7 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 										int which) {
 									// ScreenLogin.this.finish();
 									// enter login window
+									ResetInput();
 
 								}
 							}, null, null);
@@ -355,7 +360,8 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 								@Override
 								public void onClick(DialogInterface dialog,
 										int which) {
-									ScreenLogin.this.finish();
+									//ScreenLogin.this.finish();
+									ResetInput();
 
 								}
 							}, null, null);
@@ -396,7 +402,8 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 								@Override
 								public void onClick(DialogInterface dialog,
 										int which) {
-									ScreenLogin.this.finish();
+									//ScreenLogin.this.finish();
+									ResetInput();
 
 								}
 							}, null, null);
@@ -421,7 +428,8 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 									@Override
 									public void onClick(DialogInterface dialog,
 											int which) {
-										ScreenLogin.this.finish();
+										//ScreenLogin.this.finish();
+										ResetInput();
 
 									}
 								}, null, null);
@@ -441,7 +449,8 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 									@Override
 									public void onClick(DialogInterface dialog,
 											int which) {
-										ScreenLogin.this.finish();
+										//ScreenLogin.this.finish();
+										ResetInput();
 
 									}
 								}, null, null);
@@ -481,7 +490,8 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 									@Override
 									public void onClick(DialogInterface dialog,
 											int which) {
-										ScreenLogin.this.finish();
+										//ScreenLogin.this.finish();
+										ResetInput();
 
 									}
 								}, null, null);
@@ -497,7 +507,8 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 										@Override
 										public void onClick(DialogInterface dialog,
 												int which) {
-											ScreenLogin.this.finish();
+											//ScreenLogin.this.finish();
+											ResetInput();
 
 										}
 									}, null, null);
@@ -1280,8 +1291,17 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 				} 
 				else 
 				{
-					Message message = mHandler.obtainMessage(User_Login_Success);
-					message.sendToTarget();
+					String username = ParserXml(returncode, "UserName");
+					if (editUserName.getText().toString().equals(username)) {
+						Message message = mHandler.obtainMessage(User_Login_Success);
+						message.sendToTarget();
+					}
+					else {
+						Message message = mHandler.obtainMessage(User_Login_Fail);
+						message.arg1 = 808;
+						message.sendToTarget();
+					}
+					
 				}
 
 			} catch (Exception ex) {
