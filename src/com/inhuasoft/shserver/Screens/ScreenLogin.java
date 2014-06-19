@@ -170,7 +170,14 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 		 mConfigurationService.putBoolean(NgnConfigurationEntry.DEVICE_LOGIN, true);
 		 mConfigurationService.putString(NgnConfigurationEntry.USERNAME,editUserName.getText().toString());
 		 mConfigurationService.putString(NgnConfigurationEntry.USER_PASSWORD,editPassword.getText().toString());
-		 
+		 mConfigurationService.putString(NgnConfigurationEntry.NETWORK_PCSCF_DISCOVERY,NgnConfigurationEntry.DEFAULT_NETWORK_PCSCF_DISCOVERY);
+		 mConfigurationService.putString(NgnConfigurationEntry.NETWORK_PCSCF_HOST,NgnConfigurationEntry.DEFAULT_NETWORK_PCSCF_HOST);
+		 mConfigurationService.putInt(NgnConfigurationEntry.NETWORK_PCSCF_PORT,NgnConfigurationEntry.DEFAULT_NETWORK_PCSCF_PORT);
+		 mConfigurationService.putString(NgnConfigurationEntry.NETWORK_TRANSPORT,NgnConfigurationEntry.DEFAULT_NETWORK_TRANSPORT);
+		 mConfigurationService.putBoolean(NgnConfigurationEntry.NETWORK_USE_WIFI,true);
+		 mConfigurationService.putBoolean(NgnConfigurationEntry.NETWORK_USE_3G,true);
+		 mConfigurationService.putString(NgnConfigurationEntry.NETWORK_IP_VERSION, 
+					"ipv4");
 		 if(!mConfigurationService.commit()){
 				Log.e(TAG, "Failed to Commit() configuration");
 			}
@@ -180,8 +187,18 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 	 private void  StartMain() {
 		 if(mScreenService != null )
 		 {
-		   mScreenService.show(ScreenHome.class);
-		   finish();
+			 try {
+				    SetSystemInfo();
+					mSipService.register(ScreenLogin.this);
+
+					Thread.sleep(1000);
+				   //mScreenService.show(ScreenNetwork.class);
+				    mScreenService.show(ScreenHome.class);
+				   finish();
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+			
 		 }
 	}
 	
@@ -451,7 +468,6 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 				 if(!mConfigurationService.commit()){
 						Log.e(TAG, "Failed to Commit() configuration");
 					}
-				 mSipService.register(ScreenLogin.this);
 				StartMain();
 				break;
 			case User_Login_Fail:
