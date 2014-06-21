@@ -118,18 +118,30 @@
                 android:orientation="vertical"
                 android:paddingLeft="3.0dip"
                 android:paddingRight="3.0dip" >
-
+              <LinearLayout 
+                 android:layout_width="match_parent"
+                 android:layout_height="wrap_content" 
+                 android:orientation="vertical" >
                 <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="180.0dip"
                     android:scaleType="center"
                     android:src="@drawable/ic_mainpage_pg1" />
 
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="180.0dip"
-                    android:scaleType="fitXY"
-                    android:src="@drawable/ic_mainpage_pg2" />
+              <!--  <FrameLayout
+            android:id="@+id/view_call_incall_video_FrameLayout_local_video_new"
+            android:layout_width="match_parent"
+            android:layout_height="180.0dip"
+            >
+             </FrameLayout> -->
+               <LinearLayout
+                    android:id="@+id/view_call_incall_video_FrameLayout_local_video_new"
+                      android:layout_width="match_parent"
+                      android:layout_height="180.0dip"
+                    android:orientation="vertical"
+                    android:padding="6.0dip" >
+                </LinearLayout>
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"

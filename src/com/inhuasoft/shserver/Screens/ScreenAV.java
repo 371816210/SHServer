@@ -78,6 +78,7 @@ import android.view.ViewParent;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -101,7 +102,7 @@ public class ScreenAV extends BaseScreen{
 	private View mViewTrying;
 	private View mViewInAudioCall;
 	private View mViewInCallVideo;
-	private FrameLayout mViewLocalVideoPreview;
+	private LinearLayout mViewLocalVideoPreview;
 	private FrameLayout mViewRemoteVideoPreview;
 	private View mViewTermwait;
 	private View mViewProxSensor;
@@ -990,7 +991,8 @@ public class ScreenAV extends BaseScreen{
 		Log.d(TAG, "loadInCallVideoView()");
 		if(mViewInCallVideo == null){
 			mViewInCallVideo = mInflater.inflate(R.layout.view_call_incall_video, null);
-			mViewLocalVideoPreview = (FrameLayout)mViewInCallVideo.findViewById(R.id.view_call_incall_video_FrameLayout_local_video);
+			//mViewLocalVideoPreview = (FrameLayout)mViewInCallVideo.findViewById(R.id.view_call_incall_video_FrameLayout_local_video);
+			mViewLocalVideoPreview = (LinearLayout)this.findViewById(R.id.view_call_incall_video_FrameLayout_local_video_new);
 			mViewRemoteVideoPreview = (FrameLayout)mViewInCallVideo.findViewById(R.id.view_call_incall_video_FrameLayout_remote_video);
 		}
 		if(mTvDuration != null){
