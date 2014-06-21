@@ -80,7 +80,7 @@
         </ImageButton>
     </LinearLayout>
 
-    <SlidingDrawer
+    <!-- <SlidingDrawer
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_alignLeft="@+id/sview_call_trying_imageView_avatar"
@@ -110,6 +110,6 @@
                 android:layout_weight="2"
                 layout="@layout/view_dialer_buttons" />
         </LinearLayout>
-    </SlidingDrawer>
+    </SlidingDrawer> -->
 
 </RelativeLayout>

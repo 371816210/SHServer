@@ -85,7 +85,7 @@
         </ImageButton>
     </LinearLayout>
 
-    <SlidingDrawer
+    <!--<SlidingDrawer
         android:id="@+id/view_call_incall_audio_slidingDrawer"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
@@ -117,7 +117,7 @@
                 android:layout_weight="2"
                 layout="@layout/view_dialer_buttons" />
         </LinearLayout>
-    </SlidingDrawer>
+    </SlidingDrawer>-->
 
     <ImageView
         android:id="@+id/view_call_incall_audio_imageView_secure"

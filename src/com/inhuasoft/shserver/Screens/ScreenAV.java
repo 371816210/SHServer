@@ -884,7 +884,7 @@ public class ScreenAV extends BaseScreen{
 				break;
 	        case INPROGRESS:
 	        case REMOTE_RINGING:
-	        	//loadTryingView();
+	        	loadTryingView();
 	        	break;
 	        	
 	        case INCALL:
@@ -896,7 +896,7 @@ public class ScreenAV extends BaseScreen{
 	        case TERMINATING:
 	        case TERMINATED:
 	        default:
-	        	//loadTermView();
+	        	loadTermView();
 	        	break;
 	    }
 	}
@@ -909,7 +909,7 @@ public class ScreenAV extends BaseScreen{
 		
 		if(mViewTrying == null){
 			mViewTrying = mInflater.inflate(R.layout.view_call_trying, null);
-			loadKeyboard(mViewTrying);
+			//loadKeyboard(mViewTrying);
 		}
 		mTvInfo = (TextView)mViewTrying.findViewById(R.id.view_call_trying_textView_info);
 		
@@ -957,7 +957,7 @@ public class ScreenAV extends BaseScreen{
 		Log.d(TAG, "loadInCallAudioView()");
 		if(mViewInAudioCall == null){
 			mViewInAudioCall = mInflater.inflate(R.layout.view_call_incall_audio, null);
-			loadKeyboard(mViewInAudioCall);
+			//loadKeyboard(mViewInAudioCall);
 		}
 		mTvInfo = (TextView)mViewInAudioCall.findViewById(R.id.view_call_incall_audio_textView_info);
 		
@@ -1054,7 +1054,7 @@ public class ScreenAV extends BaseScreen{
 		
 		if(mViewTermwait == null){
 			mViewTermwait = mInflater.inflate(R.layout.view_call_trying, null);
-			loadKeyboard(mViewTermwait);
+			//loadKeyboard(mViewTermwait);
 		}
 		mTvInfo = (TextView)mViewTermwait.findViewById(R.id.view_call_trying_textView_info);
 		mTvInfo.setText(NgnStringUtils.isNullOrEmpty(phrase) ? getString(R.string.string_call_terminated) : phrase);
