@@ -156,7 +156,7 @@ public class ScreenAV extends BaseScreen{
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.screen_av);
+		setContentView(R.layout.screen_main_av);
 		
 		super.mId = getIntent().getStringExtra("id");
 		if(NgnStringUtils.isNullOrEmpty(super.mId)){
@@ -215,7 +215,7 @@ public class ScreenAV extends BaseScreen{
 		intentFilter.addAction(NgnMediaPluginEventArgs.ACTION_MEDIA_PLUGIN_EVENT);
 	    registerReceiver(mBroadCastRecv, intentFilter);
 	    
-	    if(mIsVideoCall){
+	  /*  if(mIsVideoCall){
 		    mListener = new OrientationEventListener(this, SensorManager.SENSOR_DELAY_NORMAL) {
 				@Override
 				public void onOrientationChanged(int orient) {
@@ -252,9 +252,9 @@ public class ScreenAV extends BaseScreen{
 			if(!mListener.canDetectOrientation()){
 				Log.w(TAG, "canDetectOrientation() is equal to false");
 			}
-	    }
+	    } */
 			
-		mMainLayout = (RelativeLayout)findViewById(R.id.screen_av_relativeLayout);
+		mMainLayout = (RelativeLayout)findViewById(R.id.screen_av_relativeLayout_new);
         loadView();
         
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
@@ -702,7 +702,7 @@ public class ScreenAV extends BaseScreen{
 				case INCOMING:
 				case INPROGRESS:
 				case REMOTE_RINGING:
-					loadTryingView();
+					//loadTryingView();
 					break;
 					
 				case EARLY_MEDIA:
@@ -865,7 +865,7 @@ public class ScreenAV extends BaseScreen{
 					mTimerSuicide.schedule(mTimerTaskSuicide, new Date(new Date().getTime() + 1500));
 					mTimerTaskInCall.cancel();
 					mTimerBlankPacket.cancel();
-					loadTermView(SHOW_SIP_PHRASE ? args.getPhrase() : null);
+					//loadTermView(SHOW_SIP_PHRASE ? args.getPhrase() : null);
 					
 					// release power lock
 					if(mWakeLock != null && mWakeLock.isHeld()){
@@ -883,7 +883,7 @@ public class ScreenAV extends BaseScreen{
 				break;
 	        case INPROGRESS:
 	        case REMOTE_RINGING:
-	        	loadTryingView();
+	        	//loadTryingView();
 	        	break;
 	        	
 	        case INCALL:
@@ -895,7 +895,7 @@ public class ScreenAV extends BaseScreen{
 	        case TERMINATING:
 	        case TERMINATED:
 	        default:
-	        	loadTermView();
+	        	//loadTermView();
 	        	break;
 	    }
 	}

@@ -23,10 +23,11 @@
             android:layout_height="360.0dip"
             android:layout_marginTop="20.0dip" >
 
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/ic_mainpage_videobg" />
+            <RelativeLayout
+             android:id="@+id/screen_av_relativeLayout_new"
+             android:layout_width="fill_parent"
+             android:layout_height="fill_parent">
+             </RelativeLayout>
 
             <TextView
                 android:layout_width="wrap_content"
