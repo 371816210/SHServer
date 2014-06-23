@@ -19,6 +19,8 @@
 */
 package com.inhuasoft.shserver.Screens;
 
+
+
 import com.inhuasoft.shserver.CustomDialog;
 import com.inhuasoft.shserver.Main;
 import com.inhuasoft.shserver.R;
@@ -29,7 +31,6 @@ import org.doubango.ngn.services.INgnConfigurationService;
 import org.doubango.ngn.services.INgnSipService;
 import org.doubango.ngn.sip.NgnSipSession.ConnectionState;
 import org.doubango.ngn.utils.NgnConfigurationEntry;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -38,6 +39,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -72,10 +74,29 @@ public class ScreenHome extends BaseScreen {
 		mConfigurationService = getEngine().getConfigurationService();
 	}
 	
+	
+	class SipLoginThread extends Thread {
+
+		public void run()
+		{
+			//zwzhu add 
+			if(mSipService.getRegistrationState() == ConnectionState.CONNECTING || mSipService.getRegistrationState() == ConnectionState.TERMINATING){
+				mSipService.stopStack();
+			}
+			else if (!mSipService.isRegistered()) {
+				mSipService.register(ScreenHome.this);
+			}
+		}
+	}
+
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.screen_home);
+		
+		SipLoginThread sip_login_thread = new SipLoginThread();
+		sip_login_thread.start();
 		
 		mGridView = (GridView) findViewById(R.id.screen_home_gridview);
 		mGridView.setAdapter(new ScreenHomeAdapter(this));

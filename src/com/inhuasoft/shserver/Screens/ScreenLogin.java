@@ -190,7 +190,7 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 		 {
 			 try {
 				    SetSystemInfo();
-					mSipService.register(ScreenLogin.this);
+					//mSipService.register(ScreenLogin.this);
 
 					//Thread.sleep(1000);
 				   //mScreenService.show(ScreenNetwork.class);
