@@ -178,6 +178,7 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 		 mConfigurationService.putBoolean(NgnConfigurationEntry.NETWORK_USE_3G,true);
 		 mConfigurationService.putString(NgnConfigurationEntry.NETWORK_IP_VERSION, 
 					"ipv4");
+		 mConfigurationService.putString(NgnConfigurationEntry.DEFAULT_Devices_SIP_NUMBER,"sip:"+editUserName.getText().toString()+"@115.28.9.71" );
 		 if(!mConfigurationService.commit()){
 				Log.e(TAG, "Failed to Commit() configuration");
 			}
