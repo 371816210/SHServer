@@ -1244,7 +1244,7 @@ public class ScreenLogin extends BaseScreen implements OnClickListener {
 				url = new URL(RequestUrl);
 			} catch (MalformedURLException e1) {
 				// TODO Auto-generated catch block
-				Message message = mHandler.obtainMessage(GetUserByDevice_Fail);
+				Message message = mHandler.obtainMessage(User_Login_Fail);
 				message.arg1 = 701;
 				message.sendToTarget();
 				e1.printStackTrace();
