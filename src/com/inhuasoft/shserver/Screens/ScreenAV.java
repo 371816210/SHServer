@@ -73,6 +73,7 @@ import android.view.MenuItem;
 import android.view.OrientationEventListener;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.FrameLayout;
@@ -136,6 +137,8 @@ public class ScreenAV extends BaseScreen{
 	
 	private static boolean SHOW_SIP_PHRASE = true;
 	
+	ImageButton imgbtn_hangup;
+	
 	private static enum ViewType{
 		ViewNone,
 		ViewTrying,
@@ -159,6 +162,18 @@ public class ScreenAV extends BaseScreen{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.screen_main_av);
 		
+		imgbtn_hangup =(ImageButton)findViewById(R.id.imgbtn_hang_up);
+		imgbtn_hangup.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				if(mTvInfo != null){
+					mTvInfo.setText("Ending the call...");
+				}
+				hangUpCall();
+			}
+		});
 		super.mId = getIntent().getStringExtra("id");
 		if(NgnStringUtils.isNullOrEmpty(super.mId)){
 			Log.e(TAG, "Invalid audio/video session");
