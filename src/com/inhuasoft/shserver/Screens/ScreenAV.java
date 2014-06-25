@@ -97,14 +97,14 @@ public class ScreenAV extends BaseScreen{
 	
 	private ViewType mCurrentView;
 	private LayoutInflater mInflater;
-	private RelativeLayout mMainLayout;
+	private LinearLayout mMainLayout;
 	private BroadcastReceiver mBroadCastRecv;
 	
 	private View mViewTrying;
 	private View mViewInAudioCall;
 	private View mViewInCallVideo;
 	private LinearLayout mViewLocalVideoPreview;
-	private FrameLayout mViewRemoteVideoPreview;
+	private LinearLayout mViewRemoteVideoPreview;
 	private View mViewTermwait;
 	private View mViewProxSensor;
 	
@@ -160,7 +160,7 @@ public class ScreenAV extends BaseScreen{
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.screen_main_av);
+		setContentView(R.layout.screen_main_av_1);
 		
 		imgbtn_hangup =(ImageButton)findViewById(R.id.imgbtn_hang_up);
 		imgbtn_hangup.setOnClickListener(new OnClickListener() {
@@ -270,7 +270,7 @@ public class ScreenAV extends BaseScreen{
 			}
 	    } */
 			
-		mMainLayout = (RelativeLayout)findViewById(R.id.screen_av_relativeLayout_new);
+		mMainLayout = (LinearLayout)findViewById(R.id.linearlayout_main);
         loadView();
         
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
@@ -1007,8 +1007,8 @@ public class ScreenAV extends BaseScreen{
 		if(mViewInCallVideo == null){
 			mViewInCallVideo = mInflater.inflate(R.layout.view_call_incall_video, null);
 			//mViewLocalVideoPreview = (FrameLayout)mViewInCallVideo.findViewById(R.id.view_call_incall_video_FrameLayout_local_video);
-			mViewLocalVideoPreview = (LinearLayout)this.findViewById(R.id.view_call_incall_video_FrameLayout_local_video_new);
-			mViewRemoteVideoPreview = (FrameLayout)mViewInCallVideo.findViewById(R.id.view_call_incall_video_FrameLayout_remote_video);
+			mViewLocalVideoPreview = (LinearLayout)mViewInCallVideo.findViewById(R.id.view_call_incall_video_FrameLayout_local_video_new);
+			mViewRemoteVideoPreview = (LinearLayout)mViewInCallVideo.findViewById(R.id.view_call_incall_video_FrameLayout_remote_video);
 		}
 		if(mTvDuration != null){
 			synchronized(mTvDuration){
@@ -1019,10 +1019,10 @@ public class ScreenAV extends BaseScreen{
 		mMainLayout.removeAllViews();
 		mMainLayout.addView(mViewInCallVideo);
 		
-		final View viewSecure = mViewInCallVideo.findViewById(R.id.view_call_incall_video_imageView_secure);
-		if(viewSecure != null){
-			viewSecure.setVisibility(mAVSession.isSecure() ? View.VISIBLE : View.INVISIBLE);
-		}
+		//final View viewSecure = mViewInCallVideo.findViewById(R.id.view_call_incall_video_imageView_secure);
+		//if(viewSecure != null){
+		//	viewSecure.setVisibility(mAVSession.isSecure() ? View.VISIBLE : View.INVISIBLE);
+		//}
 		
 		// Video Consumer
 		loadVideoPreview();
