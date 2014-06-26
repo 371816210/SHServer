@@ -160,20 +160,7 @@ public class ScreenAV extends BaseScreen{
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.screen_main_av_1);
-		
-		imgbtn_hangup =(ImageButton)findViewById(R.id.imgbtn_hang_up);
-		imgbtn_hangup.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				// TODO Auto-generated method stub
-				if(mTvInfo != null){
-					mTvInfo.setText("Ending the call...");
-				}
-				hangUpCall();
-			}
-		});
+		setContentView(R.layout.screen_main_av);
 		super.mId = getIntent().getStringExtra("id");
 		if(NgnStringUtils.isNullOrEmpty(super.mId)){
 			Log.e(TAG, "Invalid audio/video session");
@@ -1010,6 +997,20 @@ public class ScreenAV extends BaseScreen{
 			mViewLocalVideoPreview = (LinearLayout)mViewInCallVideo.findViewById(R.id.view_call_incall_video_FrameLayout_local_video_new);
 			mViewRemoteVideoPreview = (LinearLayout)mViewInCallVideo.findViewById(R.id.view_call_incall_video_FrameLayout_remote_video);
 		}
+		
+		imgbtn_hangup =(ImageButton)mViewInCallVideo.findViewById(R.id.imgbtn_hang_up);
+		imgbtn_hangup.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				if(mTvInfo != null){
+					mTvInfo.setText("Ending the call...");
+				}
+				hangUpCall();
+			}
+		});
+		
 		if(mTvDuration != null){
 			synchronized(mTvDuration){
 		        mTvDuration = null;

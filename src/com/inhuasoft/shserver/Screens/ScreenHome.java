@@ -60,12 +60,9 @@ public class ScreenHome extends BaseScreen {
 	private static final int MENU_EXIT = 0;
 	private static final int MENU_SETTINGS = 1;
 	
-	private GridView mGridView;
-	
 	private final INgnSipService mSipService;
 	private final INgnConfigurationService mConfigurationService;
 	
-	private BroadcastReceiver mSipBroadCastRecv;
 	
 	public ScreenHome() {
 		super(SCREEN_TYPE.HOME_T, TAG);
@@ -93,103 +90,16 @@ public class ScreenHome extends BaseScreen {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.screen_home);
+		setContentView(R.layout.screen_home_new);
 		
 		SipLoginThread sip_login_thread = new SipLoginThread();
 		sip_login_thread.start();
-		
-		mGridView = (GridView) findViewById(R.id.screen_home_gridview);
-		mGridView.setAdapter(new ScreenHomeAdapter(this));
-		mGridView.setOnItemClickListener(new OnItemClickListener() {
-			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				final ScreenHomeItem item = (ScreenHomeItem)parent.getItemAtPosition(position);
-				if (item != null) {
-					if(position == ScreenHomeItem.ITEM_SIGNIN_SIGNOUT_POS){
-						if(mSipService.getRegistrationState() == ConnectionState.CONNECTING || mSipService.getRegistrationState() == ConnectionState.TERMINATING){
-							mSipService.stopStack();
-						}
-						else if(mSipService.isRegistered()){
-							mSipService.unRegister();
-						}
-						else{
-							mSipService.register(ScreenHome.this);
-						}
-					}
-					else if (position == 3 ) //Video
-					{
-					    String device_sip_number = mConfigurationService.getString(NgnConfigurationEntry.Devices_SIP_NUMBER,NgnConfigurationEntry.DEFAULT_Devices_SIP_NUMBER);
-					    ScreenAV.makeCall(device_sip_number,  NgnMediaType.AudioVideo);
-					}
-					else if (position == 4)  //Audio
-					{
-						String device_sip_number = mConfigurationService.getString(NgnConfigurationEntry.Devices_SIP_NUMBER,NgnConfigurationEntry.DEFAULT_Devices_SIP_NUMBER);
-					    ScreenAV.makeCall(device_sip_number,  NgnMediaType.Audio);
-					}
-					else if(position == ScreenHomeItem.ITEM_EXIT_POS){
-						final AlertDialog dialog = CustomDialog.create(
-								ScreenHome.this,
-								R.drawable.exit_48,
-								null,
-								"Are you sure you want to exit?",
-								"Yes",
-								new DialogInterface.OnClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog, int which) {
-										((Main)(getEngine().getMainActivity())).exit();
-									}
-								}, "No",
-								new DialogInterface.OnClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog, int which) {
-										dialog.cancel();
-									}
-								});
-						dialog.show();
-					}
-					else{					
-						mScreenService.show(item.mClass, item.mClass.getCanonicalName());
-					}
-				}
-			}
-		});
-		
-		mSipBroadCastRecv = new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				final String action = intent.getAction();
-				
-				// Registration Event
-				if(NgnRegistrationEventArgs.ACTION_REGISTRATION_EVENT.equals(action)){
-					NgnRegistrationEventArgs args = intent.getParcelableExtra(NgnEventArgs.EXTRA_EMBEDDED);
-					if(args == null){
-						Log.e(TAG, "Invalid event args");
-						return;
-					}
-					switch(args.getEventType()){
-						case REGISTRATION_NOK:
-						case UNREGISTRATION_OK:
-						case REGISTRATION_OK:
-						case REGISTRATION_INPROGRESS:
-						case UNREGISTRATION_INPROGRESS:
-						case UNREGISTRATION_NOK:
-						default:
-							((ScreenHomeAdapter)mGridView.getAdapter()).refresh();
-							break;
-					}
-				}
-			}
-		};
-		final IntentFilter intentFilter = new IntentFilter();
-		intentFilter.addAction(NgnRegistrationEventArgs.ACTION_REGISTRATION_EVENT);
-	    registerReceiver(mSipBroadCastRecv, intentFilter);
+	
 	}
 
 	@Override
 	protected void onDestroy() {
-       if(mSipBroadCastRecv != null){
-    	   unregisterReceiver(mSipBroadCastRecv);
-    	   mSipBroadCastRecv = null;
-       }
+
         
        super.onDestroy();
 	}
@@ -221,106 +131,7 @@ public class ScreenHome extends BaseScreen {
 	}
 	
 	
-	/**
-	 * ScreenHomeItem
-	 */
-	static class ScreenHomeItem {
-		static final int ITEM_SIGNIN_SIGNOUT_POS = 0;
-		static final int ITEM_EXIT_POS = 1;
-		final int mIconResId;
-		final String mText;
-		final Class<? extends Activity> mClass;
 
-		private ScreenHomeItem(int iconResId, String text, Class<? extends Activity> _class) {
-			mIconResId = iconResId;
-			mText = text;
-			mClass = _class;
-		}
-	}
 	
-	/**
-	 * ScreenHomeAdapter
-	 */
-	static class ScreenHomeAdapter extends BaseAdapter{
-		static final int ALWAYS_VISIBLE_ITEMS_COUNT = 3;
-		static final ScreenHomeItem[] sItems =  new ScreenHomeItem[]{
-			// always visible
-    		new ScreenHomeItem(R.drawable.sign_in_48, "Sign In", null),
-    		new ScreenHomeItem(R.drawable.exit_48, "Exit/Quit", null),
-    		new ScreenHomeItem(R.drawable.options_48, "Options", ScreenSettings.class),
-    		//new ScreenHomeItem(R.drawable.about_48, "About", ScreenAbout.class),
-    		// visible only if connected
-    		//new ScreenHomeItem(R.drawable.dialer_48, "Dialer", ScreenTabDialer.class),
-    		//new ScreenHomeItem(R.drawable.eab2_48, "Address Book", ScreenTabContacts.class),
-    		//new ScreenHomeItem(R.drawable.history_48, "History", ScreenTabHistory.class),
-    		new ScreenHomeItem(R.drawable.visio_call_48, "Video", null),
-    		new ScreenHomeItem(R.drawable.voice_call_48, "Audio", null),
-    		//new ScreenHomeItem(R.drawable.chat_48, "Messages", ScreenTabMessages.class),
-		};
-		
-		private final LayoutInflater mInflater;
-		private final ScreenHome mBaseScreen;
-		
-		ScreenHomeAdapter(ScreenHome baseScreen){
-			mInflater = LayoutInflater.from(baseScreen);
-			mBaseScreen = baseScreen;
-		}
-		
-		void refresh(){
-			notifyDataSetChanged();
-		}
-		
-		@Override
-		public int getCount() {
-			return mBaseScreen.mSipService.isRegistered() ? sItems.length : ALWAYS_VISIBLE_ITEMS_COUNT;
-		}
-
-		@Override
-		public Object getItem(int position) {
-			return sItems[position];
-		}
-
-		@Override
-		public long getItemId(int position) {
-			return position;
-		}
-
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			View view = convertView;
-			final ScreenHomeItem item = (ScreenHomeItem)getItem(position);
-			
-			if(item == null){
-				return null;
-			}
-
-			if (view == null) {
-				view = mInflater.inflate(R.layout.screen_home_item, null);
-			}
-			
-			if(position == ScreenHomeItem.ITEM_SIGNIN_SIGNOUT_POS){
-				if(mBaseScreen.mSipService.getRegistrationState() == ConnectionState.CONNECTING || mBaseScreen.mSipService.getRegistrationState() == ConnectionState.TERMINATING){
-					((TextView) view.findViewById(R.id.screen_home_item_text)).setText("Cancel");
-					((ImageView) view .findViewById(R.id.screen_home_item_icon)).setImageResource(R.drawable.sign_inprogress_48);
-				}
-				else{
-					if(mBaseScreen.mSipService.isRegistered()){
-						((TextView) view.findViewById(R.id.screen_home_item_text)).setText("Sign Out");
-						((ImageView) view .findViewById(R.id.screen_home_item_icon)).setImageResource(R.drawable.sign_out_48);
-					}
-					else{
-						((TextView) view.findViewById(R.id.screen_home_item_text)).setText("Sign In");
-						((ImageView) view .findViewById(R.id.screen_home_item_icon)).setImageResource(R.drawable.sign_in_48);
-					}
-				}
-			}
-			else{				
-				((TextView) view.findViewById(R.id.screen_home_item_text)).setText(item.mText);
-				((ImageView) view .findViewById(R.id.screen_home_item_icon)).setImageResource(item.mIconResId);
-			}
-			
-			return view;
-		}
-		
-	}
+	
 }
