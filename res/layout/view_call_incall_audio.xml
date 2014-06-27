@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
@@ -119,12 +118,6 @@
         </LinearLayout>
     </SlidingDrawer>-->
 
-    <ImageView
-        android:id="@+id/view_call_incall_audio_imageView_secure"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:src="@drawable/secure_16" >
-    </ImageView>
+
 
 </RelativeLayout>
